@@ -1,0 +1,21 @@
+{
+  "short_name": "OCCashFlow",
+  "name": "OC CashFlow",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f8fafc",
+  "theme_color": "#6366f1",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OC CashFlow</title>
+  <!-- Tailwind CSS per lo stile chiaro/pastello pulito -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Manifest per PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/money-transfer.png">
+  
+  <style>
+    /* Rimozione barra di scorrimento estetica */
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Sfondi ed effetti sfocatura delicati */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans pb-28 selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- APP CONTAINER -->
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Schermata di caricamento iniziale -->
+    <div id="loading-screen" class="fixed inset-0 bg-slate-50 z-50 flex flex-col justify-center items-center p-4">
+      <div class="w-10 h-10 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p class="text-slate-500 font-semibold text-xs tracking-wider">Connessione a OC CashFlow Cloud...</p>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-xs px-4 hidden transition-all duration-300">
+      <div class="flex items-center space-x-3 p-4 rounded-2xl shadow-xl bg-white border border-slate-100 text-slate-700 text-xs font-bold">
+        <div class="w-2 h-2 bg-indigo-400 rounded-full animate-ping"></div>
+        <span id="toast-text">Messaggio</span>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3">
+      <div class="max-w-md mx-auto space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-sky-200 via-indigo-100 to-purple-200 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="font-extrabold text-base tracking-tight text-slate-900">OC CashFlow</h1>
+              <p class="text-[9px] text-slate-400 tracking-wider uppercase font-semibold">Gianluca • Luca • Roberto</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <button onclick="toggleSettings()" class="p-2 rounded-xl border border-slate-100 bg-white text-slate-400 hover:text-slate-600 transition-all" id="btn-settings">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- SEZIONE IMPOSTAZIONI TASSA GLOBALE -->
+        <div id="settings-card" class="bg-indigo-50/40 border border-indigo-100 rounded-2xl p-4 space-y-3 hidden">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-extrabold text-indigo-900 uppercase tracking-wider">Aliquota Accantonamento Tasse</span>
+            <span id="tax-badge" class="text-xs font-black text-indigo-700 bg-white px-2 py-0.5 rounded-lg shadow-sm border border-indigo-100">20%</span>
+          </div>
+          <p class="text-[10px] text-indigo-950/70 leading-relaxed">
+            Ogni entrata registrata dai clienti verrà depurata di questa percentuale prima della divisione in parti uguali.
+          </p>
+          <div class="flex items-center space-x-3">
+            <input type="range" min="0" max="100" value="20" id="tax-slider" oninput="updateTaxRateLocal(this.value)" onchange="saveTaxRateCloud(this.value)" class="w-full accent-indigo-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer" />
+          </div>
+        </div>
+
+        <!-- SELETTORE ANNI -->
+        <div class="flex items-center space-x-1.5 overflow-x-auto py-1 scrollbar-none border-t border-slate-100 pt-3">
+          <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1.5 shrink-0">Esercizio:</span>
+          <div id="years-list" class="flex items-center space-x-1.5">
+            <!-- Generati da JavaScript -->
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-md w-full mx-auto px-4 mt-6 flex-1">
+      
+      <!-- TAB 1: PANORAMICA (DASHBOARD) -->
+      <section id="tab-dashboard" class="space-y-6">
+        <!-- Totale Lordo / Netto -->
+        <div class="bg-gradient-to-br from-indigo-50/60 via-white to-sky-50/60 border border-slate-100 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+          <div class="flex justify-between items-center">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Entrate Lorde <span class="current-year-placeholder">2026</span></p>
+            <span class="text-[9px] font-bold text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-slate-100">Al lordo delle tasse</span>
+          </div>
+          <h2 id="total-gross" class="text-2xl font-extrabold text-slate-900 mt-1">€ 0,00</h2>
+          
+          <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100/75">
+            <div>
+              <p class="text-[10px] font-semibold text-slate-400 uppercase">Trattenute Imposte (<span id="tax-rate-label">20</span>%)</p>
+              <p id="total-taxes" class="text-sm font-bold text-rose-500 mt-0.5">€ 0,00</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-semibold text-slate-400 uppercase">Netto Disponibile</p>
+              <p id="total-net" class="text-sm font-bold text-emerald-600 mt-0.5">€ 0,00</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-dashed border-slate-100 flex justify-between items-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Quota Netta a Testa (1/3)</span>
+            <span id="fair-share" class="text-sm font-black text-indigo-600">€ 0,00</span>
+          </div>
+        </div>
+
+        <!-- Sezione Compensazioni Consigliate -->
+        <div class="space-y-2.5">
+          <div class="flex justify-between items-center px-1">
+            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Compensazioni Consigliate</h3>
+            <span class="text-[9px] text-slate-400">Ricalcolato sul Netto</span>
+          </div>
+          <div id="suggested-transfers-container" class="space-y-2.5">
+            <!-- Riempito via JavaScript -->
+          </div>
+        </div>
+
+        <!-- Sezione Cassa Personale -->
+        <div class="space-y-2.5">
+          <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Cassa Personale <span class="current-year-placeholder">2026</span></h3>
+          <div class="grid grid-cols-3 gap-3" id="team-balances-container">
+            <!-- Riempito via JavaScript -->
+          </div>
+        </div>
+
+        <!-- Grafico / Riepilogo Riscosso Personale -->
+        <div class="bg-white border border-slate-100 rounded-2xl p-4 space-y-3 shadow-sm">
+          <h4 class="text-[10px] font-bold text-slate-400 uppercase">Riepilogo Riscosso sul Conto Fisico (<span class="current-year-placeholder">2026</span>)</h4>
+          <div class="space-y-3" id="direct-earnings-container">
+            <!-- Riempito via JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: CLIENTI & CONTRATTI -->
+      <section id="tab-clients" class="space-y-6 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-extrabold text-slate-800">Anagrafica & Contratti</h2>
+            <p class="text-[10px] text-slate-400 mt-0.5">Budget lordi registrati nel <span class="current-year-placeholder">2026</span></p>
+          </div>
+          <button onclick="openClientModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98]">
+            + Cliente
+          </button>
+        </div>
+        <div id="clients-list-container" class="space-y-4">
+          <!-- Riempito via JavaScript -->
+        </div>
+      </section>
+
+      <!-- TAB 3: ENTRATE (PAGAMENTI) -->
+      <section id="tab-payments" class="space-y-6 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-extrabold text-slate-800">Entrate Clienti (<span class="current-year-placeholder">2026</span>)</h2>
+            <p class="text-[10px] text-slate-400 mt-0.5">Flussi monetari lordi in arrivo dai contratti</p>
+          </div>
+          <button onclick="openPaymentModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98]">
+            + Entrata
+          </button>
+        </div>
+        <div id="payments-list-container" class="space-y-2.5">
+          <!-- Riempito via JavaScript -->
+        </div>
+      </section>
+
+      <!-- TAB 4: COMPENSAZIONI -->
+      <section id="tab-settlements" class="space-y-6 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-extrabold text-slate-800">Compensazioni (<span class="current-year-placeholder">2026</span>)</h2>
+            <p class="text-[10px] text-slate-400 mt-0.5">Movimenti finanziari netti tra di voi</p>
+          </div>
+          <button onclick="openSettlementModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98]">
+            + Registra Saldo
+          </button>
+        </div>
+        <div id="settlements-list-container" class="space-y-2.5">
+          <!-- Riempito via JavaScript -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-100 pb-safe shadow-lg">
+      <div class="max-w-md mx-auto grid grid-cols-4 gap-1 px-2 py-2">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-indigo-600 bg-indigo-50/50">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Panoramica</span>
+        </button>
+        <button onclick="switchTab('clients')" id="nav-clients" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Clienti</span>
+        </button>
+        <button onclick="switchTab('payments')" id="nav-payments" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Entrate</span>
+        </button>
+        <button onclick="switchTab('settlements')" id="nav-settlements" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Saldi</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ==========================================
+      MODALS DI INSERIMENTO E CONFERME
+     ========================================== -->
+  
+  <!-- MODAL NUOVO CLIENTE -->
+  <div id="modal-client" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-extrabold text-slate-800">Crea Nuovo Cliente</h3>
+        <button onclick="closeClientModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <form onsubmit="saveClient(event)" class="space-y-4">
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Ragione Sociale / Identificativo</label>
+          <input type="text" id="new-client-name" placeholder="Es. ACME S.r.l." required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
+        </div>
+        <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all">
+          Crea Cliente
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL NUOVO PROGETTO -->
+  <div id="modal-project" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-800">Nuovo Progetto</h3>
+          <p class="text-[9px] text-indigo-500 font-bold">Lordo, per l'esercizio <span class="current-year-placeholder">2026</span></p>
+        </div>
+        <button onclick="closeProjectModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <form onsubmit="saveProject(event)" class="space-y-3.5">
+        <input type="hidden" id="new-proj-client-id">
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Nome Progetto / Commessa</label>
+          <input type="text" id="new-proj-name" placeholder="Es. Sviluppo Web" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Importo Pattuito LORDO (€)</label>
+          <input type="number" step="0.01" id="new-proj-budget" placeholder="Es. 10000" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
+        </div>
+        <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all">
+          Crea Progetto Lordo
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL NUOVA ENTRATA -->
+  <div id="modal-payment" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-extrabold text-slate-800">Registra Entrata Cliente</h3>
+        <button onclick="closePaymentModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <form onsubmit="savePayment(event)" class="space-y-3.5">
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Progetto Associato (<span class="current-year-placeholder">2026</span>)</label>
+          <select id="new-pay-proj-id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-600 focus:outline-none focus:border-indigo-400">
+            <!-- Popolato via JS -->
+          </select>
+        </div>
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Chi ha riscosso il pagamento?</label>
+          <div class="grid grid-cols-3 gap-2" id="pay-receivers-group">
+            <button type="button" onclick="setPayReceiver('gianluca')" id="pay-rec-gianluca" class="py-2 px-1 rounded-xl border text-[11px] font-bold bg-indigo-50 border-indigo-300 text-indigo-700">Gianluca</button>
+            <button type="button" onclick="setPayReceiver('luca')" id="pay-rec-luca" class="py-2 px-1 rounded-xl border text-[11px] font-bold bg-slate-50 border-slate-200 text-slate-500">Luca</button>
+            <button type="button" onclick="setPayReceiver('roberto')" id="pay-rec-roberto" class="py-2 px-1 rounded-xl border text-[11px] font-bold bg-slate-50 border-slate-200 text-slate-500">Roberto</button>
+          </div>
+          <input type="hidden" id="new-pay-receiver" value="gianluca">
+        </div>
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Importo LORDO Ricevuto (€)</label>
+          <input type="number" step="0.01" id="new-pay-amount" placeholder="Es. 3000" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Data Incasso</label>
+            <input type="date" id="new-pay-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-[10px] text-slate-700 focus:outline-none" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Metodo / Canale</label>
+            <input type="text" id="new-pay-desc" placeholder="Bonifico, contanti..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none" />
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all">
+          Registra Entrata Lorda
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL NUOVA COMPENSAZIONE (SALDO) -->
+  <div id="modal-settlement" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-extrabold text-slate-800">Registra Movimento Interno</h3>
+        <button onclick="closeSettlementModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <form onsubmit="saveSettlement(event)" class="space-y-3.5">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Chi Invia (Debitore)</label>
+            <select id="new-set-from" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-600">
+              <option value="gianluca">Gianluca</option>
+              <option value="luca">Luca</option>
+              <option value="roberto">Roberto</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Chi Riceve (Creditore)</label>
+            <select id="new-set-to" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-600">
+              <option value="gianluca">Gianluca</option>
+              <option value="luca" selected>Luca</option>
+              <option value="roberto">Roberto</option>
+            </select>
+          </div>
+        </div>
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Somma Inviata Netta (€)</label>
+          <input type="number" step="0.01" id="new-set-amount" placeholder="Es. 350" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Data Transazione</label>
+          <input type="date" id="new-set-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-[10px] text-slate-700" />
+        </div>
+        <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all">
+          Conferma Compensazione
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DI CONFERMA ELIMINAZIONE CUSTOM -->
+  <div id="modal-delete" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4 text-center">
+      <div class="w-10 h-10 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center mx-auto">
+        <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div class="space-y-1">
+        <h4 class="text-sm font-extrabold text-slate-800">Conferma Operazione</h4>
+        <p id="delete-confirm-message" class="text-[10px] text-slate-400 leading-relaxed">Messaggio di avviso per l'eliminazione.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="closeDeleteModal()" class="bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-600 py-2 rounded-xl text-[10px] font-bold">
+          Annulla
+        </button>
+        <button id="btn-confirm-delete" class="bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl text-[10px] font-bold">
+          Elimina
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+      IMPORTAZIONE SDK FIREBASE (V10 CDN MODERNA)
+     ========================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, doc, addDoc, deleteDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // INSERISCI QUI LE TUE CREDENZIALI COPIATE DA FIREBASE
+    const firebaseConfig = {
+  apiKey: "AIzaSyA1dL2aZRiOjN1QyYyIjKTfDtQrEi7HpKg",
+  authDomain: "occashflow-59e7f.firebaseapp.com",
+  projectId: "occashflow-59e7f",
+  storageBucket: "occashflow-59e7f.firebasestorage.app",
+  messagingSenderId: "509266979531",
+  appId: "1:509266979531:web:2b5f7e875b85a90f0c094e"
+    };
+
+    // Inizializzazione Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = "oc-cashflow-pwa";
+
+    // Variabili di stato dell'applicazione
+    let selectedYear = 2026;
+    let taxRate = 20;
+    
+    let clients = [];
+    let projects = [];
+    let payments = [];
+    let settlements = [];
+
+    const TEAM = [
+      { id: 'gianluca', name: 'Gianluca', color: 'from-violet-300 to-purple-400', bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-100', avatar: 'G' },
+      { id: 'luca', name: 'Luca', color: 'from-sky-300 to-blue-400', bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-100', avatar: 'L' },
+      { id: 'roberto', name: 'Roberto', color: 'from-emerald-200 to-teal-300', bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', avatar: 'R' }
+    ];
+
+    const AVAILABLE_YEARS = [2024, 2025, 2026, 2027, 2028];
+
+    // Esposizione funzioni al window scope per pulsanti onclick HTML
+    window.switchTab = switchTab;
+    window.toggleSettings = toggleSettings;
+    window.updateTaxRateLocal = updateTaxRateLocal;
+    window.saveTaxRateCloud = saveTaxRateCloud;
+    window.selectYear = selectYear;
+    
+    window.openClientModal = openClientModal;
+    window.closeClientModal = closeClientModal;
+    window.saveClient = saveClient;
+
+    window.openProjectModal = openProjectModal;
+    window.closeProjectModal = closeProjectModal;
+    window.saveProject = saveProject;
+
+    window.openPaymentModal = openPaymentModal;
+    window.closePaymentModal = closePaymentModal;
+    window.setPayReceiver = setPayReceiver;
+    window.savePayment = savePayment;
+
+    window.openSettlementModal = openSettlementModal;
+    window.closeSettlementModal = closeSettlementModal;
+    window.saveSettlement = saveSettlement;
+
+    window.closeDeleteModal = closeDeleteModal;
+
+    // Login automatico anonimo e caricamento dei flussi Firestore
+    window.addEventListener('load', async () => {
+      renderYearsSelector();
+      initFormDates();
+      
+      try {
+        await signInAnonymously(auth);
+        setupRealtimeSync();
+      } catch (err) {
+        console.error("Errore autenticazione:", err);
+        showToast("Impossibile connettersi al database.", "error");
+      }
+    });
+
+    // Registrazione in tempo reale delle collezioni
+    function setupRealtimeSync() {
+      const clientsRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
+      const projectsRef = collection(db, 'artifacts', appId, 'public', 'data', 'projects');
+      const paymentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'payments');
+      const settlementsRef = collection(db, 'artifacts', appId, 'public', 'data', 'settlements');
+      const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global');
+
+      onSnapshot(clientsRef, (snapshot) => {
+        clients = [];
+        snapshot.forEach(doc => clients.push({ id: doc.id, ...doc.data() }));
+        processAndRender();
+      });
+
+      onSnapshot(projectsRef, (snapshot) => {
+        projects = [];
+        snapshot.forEach(doc => projects.push({ id: doc.id, ...doc.data() }));
+        processAndRender();
+      });
+
+      onSnapshot(paymentsRef, (snapshot) => {
+        payments = [];
+        snapshot.forEach(doc => payments.push({ id: doc.id, ...doc.data() }));
+        payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+        processAndRender();
+      });
+
+      onSnapshot(settlementsRef, (snapshot) => {
+        settlements = [];
+        snapshot.forEach(doc => settlements.push({ id: doc.id, ...doc.data() }));
+        settlements.sort((a, b) => new Date(b.date) - new Date(a.date));
+        processAndRender();
+      });
+
+      onSnapshot(settingsRef, (docSnap) => {
+        if (docSnap.exists()) {
+          taxRate = docSnap.data().taxRate ?? 20;
+          document.getElementById('tax-slider').value = taxRate;
+          document.getElementById('tax-badge').innerText = taxRate + '%';
+          document.getElementById('tax-rate-label').innerText = taxRate;
+        }
+        processAndRender();
+      });
+
+      // Rimuovi schermata di caricamento
+      setTimeout(() => {
+        const loader = document.getElementById('loading-screen');
+        if(loader) loader.classList.add('hidden');
+      }, 500);
+    }
+
+    // ==========================================
+    // MOTORE DI CALCOLO INTERNO (Gianluca, Luca, Roberto)
+    // ==========================================
+    function processAndRender() {
+      // 1. Filtraggio anno corrente
+      const filteredProjects = projects.filter(p => p.year ? p.year === selectedYear : selectedYear === 2026);
+      const filteredPayments = payments.filter(p => p.date && p.date.startsWith(selectedYear.toString()));
+      const filteredSettlements = settlements.filter(s => s.date && s.date.startsWith(selectedYear.toString()));
+
+      // 2. Aggiorna titoli temporali nell'interfaccia
+      document.querySelectorAll('.current-year-placeholder').forEach(el => {
+        el.innerText = selectedYear;
+      });
+
+      // 3. Calcolo entrate lordi e netti
+      const directNet = { gianluca: 0, luca: 0, roberto: 0 };
+      const directGross = { gianluca: 0, luca: 0, roberto: 0 };
+
+      filteredPayments.forEach(p => {
+        const gross = parseFloat(p.amount) || 0;
+        const net = gross * (1 - taxRate / 100);
+        if (directNet[p.receiver] !== undefined) {
+          directNet[p.receiver] += net;
+          directGross[p.receiver] += gross;
+        }
+      });
+
+      const totalGross = filteredPayments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+      const totalNet = totalGross * (1 - taxRate / 100);
+      const totalTaxes = totalGross * (taxRate / 100);
+      const fairShare = totalNet / 3;
+
+      // Aggiornamento Box Panoramica principale
+      document.getElementById('total-gross').innerText = formatCurrency(totalGross);
+      document.getElementById('total-taxes').innerText = formatCurrency(totalTaxes);
+      document.getElementById('total-net').innerText = formatCurrency(totalNet);
+      document.getElementById('fair-share').innerText = formatCurrency(fairShare);
+
+      // 4. Calcolo compensazioni interne
+      const flows = {
+        gianluca: { given: 0, received: 0 },
+        luca: { given: 0, received: 0 },
+        roberto: { governor: 0, given: 0, received: 0 }
+      };
+
+      filteredSettlements.forEach(s => {
+        const amt = parseFloat(s.amount) || 0;
+        if (flows[s.from]) flows[s.from].given += amt;
+        if (flows[s.to]) flows[s.to].received += amt;
+      });
+
+      // Cassa personale: FairShareNet - riscosso diretto netto + girato dato - girato ricevuto
+      const balances = {
+        gianluca: fairShare - directNet.gianluca + flows.gianluca.given - flows.gianluca.received,
+        luca: fairShare - directNet.luca + flows.luca.given - flows.luca.received,
+        roberto: fairShare - directNet.roberto + flows.roberto.given - flows.roberto.received
+      };
+
+      // Matrice dei debiti
+      const debtors = [];
+      const creditors = [];
+
+      TEAM.forEach(m => {
+        const bal = balances[m.id];
+        if (bal < -0.01) {
+          debtors.push({ id: m.id, name: m.name, amount: Math.abs(bal) });
+        } else if (bal > 0.01) {
+          creditors.push({ id: m.id, name: m.name, amount: bal });
+        }
+      });
+
+      const suggestedTransfers = [];
+      let dIdx = 0, cIdx = 0;
+      const tempDebtors = debtors.map(d => ({...d}));
+      const tempCreditors = creditors.map(c => ({...c}));
+
+      while(dIdx < tempDebtors.length && cIdx < tempCreditors.length) {
+        const deb = tempDebtors[dIdx];
+        const cred = tempCreditors[cIdx];
+        const toTransfer = Math.min(deb.amount, cred.amount);
+
+        if (toTransfer > 0.01) {
+          suggestedTransfers.push({
+            from: deb.id,
+            fromName: deb.name,
+            to: cred.id,
+            toName: cred.name,
+            amount: toTransfer
+          });
+        }
+        deb.amount -= toTransfer;
+        cred.amount -= toTransfer;
+
+        if (deb.amount <= 0.01) dIdx++;
+        if (cred.amount <= 0.01) cIdx++;
+      }
+
+      // rendering dinamico della pagina
+      renderCompensations(suggestedTransfers);
+      renderBalances(balances);
+      renderFatturatoSoggetti(directNet, totalNet);
+      renderClients(filteredProjects, filteredPayments);
+      renderPayments(filteredPayments);
+      renderSettlements(filteredSettlements);
+      populateProjectDropdown(filteredProjects);
+    }
+
+    // ==========================================
+    // RENDER FUNZIONI INTERFACCIA UTENTE
+    // ==========================================
+    function renderYearsSelector() {
+      const container = document.getElementById('years-list');
+      container.innerHTML = AVAILABLE_YEARS.map(yr => {
+        const isActive = yr === selectedYear;
+        return `
+          <button onclick="selectYear(${yr})" class="px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+            isActive 
+              ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-100 scale-105' 
+              : 'bg-white text-slate-500 border border-slate-100 hover:text-slate-700'
+          }">
+            ${yr}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectYear(yr) {
+      selectedYear = yr;
+      renderYearsSelector();
+      initFormDates();
+      processAndRender();
+    }
+
+    function renderCompensations(transfers) {
+      const container = document.getElementById('suggested-transfers-container');
+      if (transfers.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-100 rounded-2xl p-6 text-center shadow-sm">
+            <div class="w-8 h-8 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-2">
+              <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p class="text-xs font-bold text-slate-700">Conti in perfetto equilibrio!</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Ognuno ha riscosso o compensato in modo ideale.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = transfers.map(t => {
+        const fromMember = TEAM.find(m => m.id === t.from);
+        const toMember = TEAM.find(m => m.id === t.to);
+        const dataPayload = JSON.stringify(t).replace(/"/g, '&quot;');
+        return `
+          <div class="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center border border-rose-100 font-bold text-rose-500 text-xs">
+                  ${fromMember?.avatar}
+                </div>
+                <div>
+                  <p class="text-[9px] text-slate-400">Deve dare</p>
+                  <p class="text-xs font-bold text-slate-700">${fromMember?.name}</p>
+                </div>
+              </div>
+              
+              <div class="flex flex-col items-center">
+                <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+                <span class="text-[10px] text-indigo-600 font-extrabold mt-0.5">€ ${t.amount.toFixed(2)}</span>
+              </div>
+
+              <div class="flex items-center space-x-2.5 text-right">
+                <div>
+                  <p class="text-[9px] text-slate-400">A favore di</p>
+                  <p class="text-xs font-bold text-slate-700">${toMember?.name}</p>
+                </div>
+                <div class="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100 font-bold text-emerald-500 text-xs">
+                  ${toMember?.avatar}
+                </div>
+              </div>
+            </div>
+
+            <button onclick='quickSettle(${dataPayload})' class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-100 py-2 rounded-xl text-[10px] font-bold text-slate-600 flex items-center justify-center space-x-1.5 transition-all">
+              <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+              <span>Registra Movimento Interno</span>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderBalances(balances) {
+      const container = document.getElementById('team-balances-container');
+      container.innerHTML = TEAM.map(member => {
+        const bal = balances[member.id] || 0;
+        const isCredit = bal >= 0;
+        return `
+          <div class="bg-white border border-slate-100 rounded-2xl p-3 flex flex-col justify-between space-y-3 shadow-sm">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="w-6 h-6 rounded-lg bg-gradient-to-tr ${member.color} text-slate-700 font-bold text-[10px] flex items-center justify-center">
+                  ${member.avatar}
+                </span>
+                <span class="text-[8px] text-slate-400 font-bold">P. IVA</span>
+              </div>
+              <h4 class="text-xs font-bold text-slate-700 mt-1.5">${member.name}</h4>
+            </div>
+            <div>
+              <p class="text-xs font-extrabold truncate ${isCredit ? 'text-emerald-600' : 'text-rose-500'}">
+                ${isCredit ? '+' : ''}€ ${bal.toFixed(2)}
+              </p>
+              <span class="text-[8px] text-slate-400 font-medium">
+                ${isCredit ? 'A Credito' : 'A Debito'}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFatturatoSoggetti(directNet, totalNet) {
+      const container = document.getElementById('direct-earnings-container');
+      container.innerHTML = TEAM.map(member => {
+        const netValue = directNet[member.id] || 0;
+        const percentage = totalNet > 0 ? (netValue / totalNet) * 100 : 0;
+        return `
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span class="text-slate-500">${member.name} (Disponibile Netto)</span>
+              <span class="text-slate-700">€ ${netValue.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="w-full bg-slate-50 h-1.5 rounded-full overflow-hidden border border-slate-100/50">
+              <div class="h-full bg-gradient-to-r ${member.color} rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderClients(filteredProjects, filteredPayments) {
+      const container = document.getElementById('clients-list-container');
+      if (clients.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
+            <p class="text-xs font-bold text-slate-500">Nessun cliente censito</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Aggiungi il tuo primo cliente aziendale per iniziare.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = clients.map(client => {
+        const clientProjects = filteredProjects.filter(p => p.clientId === client.id);
+        
+        let clientBudgetLordo = 0;
+        let clientCollectedLordo = 0;
+
+        clientProjects.forEach(proj => {
+          clientBudgetLordo += parseFloat(proj.budget) || 0;
+          // Calcola riscosso lordo per il progetto
+          const collectedProj = filteredPayments
+            .filter(p => p.projectId === proj.id)
+            .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+          clientCollectedLordo += collectedProj;
+        });
+
+        const percentage = clientBudgetLordo > 0 ? Math.min((clientCollectedLordo / clientBudgetLordo) * 100, 100) : 0;
+
+        // Lista dei singoli progetti interni alla card
+        const projectsHtml = clientProjects.map(proj => {
+          const collectedProj = filteredPayments
+            .filter(p => p.projectId === proj.id)
+            .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+          const projPercentage = proj.budget > 0 ? Math.min((collectedProj / proj.budget) * 100, 100) : 0;
+
+          return `
+            <div class="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center justify-between">
+              <div class="flex-1 mr-3 pl-1">
+                <div class="flex items-center justify-between">
+                  <p class="text-[11px] font-bold text-slate-700">${proj.name}</p>
+                  <span class="text-[9px] font-bold text-slate-400">Lordo: € ${proj.budget.toLocaleString('it-IT')}</span>
+                </div>
+                <div class="flex items-center justify-between text-[9px] text-slate-400 mt-0.5">
+                  <span>Ricevuto Lordo: € ${collectedProj.toLocaleString('it-IT')}</span>
+                  <span>${projPercentage.toFixed(0)}%</span>
+                </div>
+              </div>
+              <button onclick="deleteItem('projects', '${proj.id}', 'Sei sicuro di voler rimuovere il progetto &quot;${proj.name}&quot;? Le entrate registrate rimarranno in archivio.')" class="text-slate-300 hover:text-rose-500 p-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
+                </svg>
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-white border border-slate-100 rounded-2xl p-4 space-y-3 shadow-sm hover:border-slate-200 transition-all">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-extrabold text-slate-800 text-sm">${client.name}</h3>
+                <p class="text-[10px] text-slate-400">${clientProjects.length} ${clientProjects.length === 1 ? 'progetto' : 'progetti'} nel ${selectedYear}</p>
+              </div>
+              <button onclick="deleteItem('clients', '${client.id}', 'Sei sicuro di voler eliminare l&apos;anagrafica di &quot;${client.name}&quot;?')" class="text-slate-300 hover:text-rose-500 p-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
+                </svg>
+              </button>
+            </div>
+
+            ${clientBudgetLordo > 0 ? `
+              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1.5">
+                <div class="flex justify-between text-[10px]">
+                  <span class="text-slate-400">Budget ${selectedYear}</span>
+                  <span class="font-bold text-slate-600">€ ${clientCollectedLordo.toLocaleString('it-IT')} / € ${clientBudgetLordo.toLocaleString('it-IT')}</span>
+                </div>
+                <div class="w-full bg-white h-1.5 rounded-full overflow-hidden border border-slate-100">
+                  <div class="h-full bg-gradient-to-r from-sky-400 to-indigo-400 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+                <div class="flex justify-between text-[9px] text-slate-400 font-semibold">
+                  <span>${percentage.toFixed(0)}% Incassato</span>
+                  <span>Rimanente: € ${(clientBudgetLordo - clientCollectedLordo).toLocaleString('it-IT')}</span>
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="space-y-2 pt-2 border-t border-slate-50">
+              <div class="flex items-center justify-between">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Progetti ${selectedYear}</p>
+                <button onclick="openProjectModal('${client.id}')" class="text-[9px] font-bold text-indigo-500 hover:underline">
+                  + Aggiungi Progetto
+                </button>
+              </div>
+              <div class="space-y-1.5">
+                ${projectsHtml || `<p class="text-[10px] text-slate-400 italic">Nessun progetto associato per il ${selectedYear}.</p>`}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPayments(filteredPayments) {
+      const container = document.getElementById('payments-list-container');
+      if (filteredPayments.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
+            <p class="text-xs font-bold text-slate-500">Nessuna entrata per il ${selectedYear}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Registra le rimesse esterne dei vostri clienti.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredPayments.map(p => {
+        const details = getProjectDetailsForPayment(p.projectId);
+        const receiverTeam = TEAM.find(t => t.id === p.receiver);
+        const gross = parseFloat(p.amount) || 0;
+        const net = gross * (1 - taxRate / 100);
+
+        return `
+          <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+            <div class="space-y-1 flex-1 mr-3">
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex px-2 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-wider ${receiverTeam?.bg} ${receiverTeam?.text} border ${receiverTeam?.border}">
+                  Incasso ${receiverTeam?.name}
+                </span>
+                <span class="text-[9px] text-slate-400">${p.date}</span>
+              </div>
+              <div>
+                <h4 class="text-[10px] text-slate-400 font-bold uppercase">${details.clientName}</h4>
+                <p class="text-xs font-extrabold text-slate-700 leading-tight">${details.projectName}</p>
+                ${p.description ? `<p class="text-[10px] text-slate-400 mt-0.5 italic">"${p.description}"</p>` : ''}
+              </div>
+            </div>
+            
+            <div class="flex items-center space-x-2.5 text-right">
+              <div>
+                <p class="text-sm font-extrabold text-slate-800">€ ${gross.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+                <p class="text-[8px] text-slate-400 uppercase font-semibold">Lordo (Netto: € ${net.toFixed(0)})</p>
+              </div>
+              <button onclick="deleteItem('payments', '${p.id}', 'Eliminare questa entrata da € ${gross}?')" class="text-slate-300 hover:text-rose-500 p-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSettlements(filteredSettlements) {
+      const container = document.getElementById('settlements-list-container');
+      if (filteredSettlements.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
+            <p class="text-xs font-bold text-slate-500">Nessun trasferimento nel ${selectedYear}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Registrate i rimborsi interni per aggiornare i saldi.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredSettlements.map(set => {
+        const fromM = TEAM.find(t => t.id === set.from);
+        const toM = TEAM.find(t => t.id === set.to);
+        const amt = parseFloat(set.amount) || 0;
+
+        return `
+          <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-2.5">
+              <div class="flex items-center -space-x-1.5">
+                <span class="w-6 h-6 rounded-lg bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center font-bold text-[10px]">
+                  ${fromM?.avatar}
+                </span>
+                <span class="text-slate-300 text-[9px] px-0.5">→</span>
+                <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-500 border border-emerald-100 flex items-center justify-center font-bold text-[10px]">
+                  ${toM?.avatar}
+                </span>
+              </div>
+              <div>
+                <p class="text-[11px] text-slate-700 font-bold">
+                  ${fromM?.name} a ${toM?.name}
+                </p>
+                <p class="text-[8px] text-slate-400">${set.date}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2 text-right">
+              <div>
+                <p class="text-xs font-extrabold text-slate-800">€ ${amt.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+                <p class="text-[8px] text-slate-400 uppercase font-semibold">Salto Interno</p>
+              </div>
+              <button onclick="deleteItem('settlements', '${set.id}', 'Rimuovere questa compensazione di € ${amt}?')" class="text-slate-300 hover:text-rose-500 p-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function populateProjectDropdown(filteredProjects) {
+      const select = document.getElementById('new-pay-proj-id');
+      if (!select) return;
+
+      if (filteredProjects.length === 0) {
+        select.innerHTML = `<option value="" disabled>Nessun progetto per il ${selectedYear}</option>`;
+        return;
+      }
+
+      select.innerHTML = filteredProjects.map(p => {
+        const client = clients.find(c => c.id === p.clientId);
+        return `<option value="${p.id}">${client ? client.name : 'Cliente'} - ${p.name}</option>`;
+      }).join('');
+    }
+
+    // ==========================================
+    // AZIONI, POPUP E INTERAZIONI UTENTE
+    // ==========================================
+    function switchTab(tab) {
+      document.querySelectorAll('main > section').forEach(sect => sect.classList.add('hidden'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+      // Style bottom bar
+      document.querySelectorAll('nav button').forEach(btn => {
+        btn.classList.remove('text-indigo-600', 'bg-indigo-50/50');
+        btn.classList.add('text-slate-400');
+      });
+      document.getElementById(`nav-${tab}`).classList.remove('text-slate-400');
+      document.getElementById(`nav-${tab}`).classList.add('text-indigo-600', 'bg-indigo-50/50');
+    }
+
+    function toggleSettings() {
+      const el = document.getElementById('settings-card');
+      el.classList.toggle('hidden');
+    }
+
+    function updateTaxRateLocal(val) {
+      document.getElementById('tax-badge').innerText = val + '%';
+      document.getElementById('tax-rate-label').innerText = val;
+    }
+
+    async function saveTaxRateCloud(val) {
+      taxRate = parseInt(val) || 0;
+      try {
+        const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global');
+        await setDoc(settingsRef, { taxRate }, { merge: true });
+        showToast("Aliquota tasse aggiornata!");
+      } catch(err) {
+        console.error(err);
+      }
+    }
+
+    function openClientModal() {
+      document.getElementById('modal-client').classList.remove('hidden');
+    }
+    function closeClientModal() {
+      document.getElementById('modal-client').classList.add('hidden');
+      document.getElementById('new-client-name').value = '';
+    }
+    async function saveClient(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-client-name').value.trim();
+      if (!name) return;
+
+      try {
+        const ref = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
+        await addDoc(ref, { name, createdAt: new Date().toISOString() });
+        closeClientModal();
+        showToast("Cliente registrato!");
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openProjectModal(clientId) {
+      document.getElementById('new-proj-client-id').value = clientId;
+      document.getElementById('modal-project').classList.remove('hidden');
+    }
+    function closeProjectModal() {
+      document.getElementById('modal-project').classList.add('hidden');
+      document.getElementById('new-proj-name').value = '';
+      document.getElementById('new-proj-budget').value = '';
+    }
+    async function saveProject(e) {
+      e.preventDefault();
+      const clientId = document.getElementById('new-proj-client-id').value;
+      const name = document.getElementById('new-proj-name').value.trim();
+      const budget = parseFloat(document.getElementById('new-proj-budget').value);
+
+      if(!clientId || !name || !budget) return;
+
+      try {
+        const ref = collection(db, 'artifacts', appId, 'public', 'data', 'projects');
+        await addDoc(ref, {
+          clientId,
+          name,
+          budget,
+          year: selectedYear,
+          createdAt: new Date().toISOString()
+        });
+        closeProjectModal();
+        showToast("Progetto registrato!");
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openPaymentModal() {
+      document.getElementById('modal-payment').classList.remove('hidden');
+    }
+    function closePaymentModal() {
+      document.getElementById('modal-payment').classList.add('hidden');
+      document.getElementById('new-pay-amount').value = '';
+      document.getElementById('new-pay-desc').value = '';
+    }
+    function setPayReceiver(id) {
+      document.getElementById('new-pay-receiver').value = id;
+      document.querySelectorAll('#pay-receivers-group button').forEach(btn => {
+        btn.classList.remove('bg-indigo-50', 'border-indigo-300', 'text-indigo-700');
+        btn.classList.add('bg-slate-50', 'border-slate-200', 'text-slate-500');
+      });
+      document.getElementById(`pay-rec-${id}`).classList.remove('bg-slate-50', 'border-slate-200', 'text-slate-500');
+      document.getElementById(`pay-rec-${id}`).classList.add('bg-indigo-50', 'border-indigo-300', 'text-indigo-700');
+    }
+    async function savePayment(e) {
+      e.preventDefault();
+      const projectId = document.getElementById('new-pay-proj-id').value;
+      const receiver = document.getElementById('new-pay-receiver').value;
+      const amount = parseFloat(document.getElementById('new-pay-amount').value);
+      const date = document.getElementById('new-pay-date').value;
+      const description = document.getElementById('new-pay-desc').value.trim();
+
+      if (!projectId || !receiver || !amount || !date) return;
+
+      try {
+        const ref = collection(db, 'artifacts', appId, 'public', 'data', 'payments');
+        await addDoc(ref, {
+          projectId,
+          receiver,
+          amount,
+          date,
+          description,
+          createdAt: new Date().toISOString()
+        });
+        closePaymentModal();
+        showToast("Entrata registrata!");
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openSettlementModal() {
+      document.getElementById('modal-settlement').classList.remove('hidden');
+    }
+    function closeSettlementModal() {
+      document.getElementById('modal-settlement').classList.add('hidden');
+      document.getElementById('new-set-amount').value = '';
+    }
+    window.quickSettle = function(t) {
+      document.getElementById('new-set-from').value = t.from;
+      document.getElementById('new-set-to').value = t.to;
+      document.getElementById('new-set-amount').value = t.amount.toFixed(2);
+      openSettlementModal();
+    }
+    async function saveSettlement(e) {
+      e.preventDefault();
+      const from = document.getElementById('new-set-from').value;
+      const to = document.getElementById('new-set-to').value;
+      const amount = parseFloat(document.getElementById('new-set-amount').value);
+      const date = document.getElementById('new-set-date').value;
+
+      if(from === to) {
+        showToast("Scegli due persone diverse!", "error");
+        return;
+      }
+
+      try {
+        const ref = collection(db, 'artifacts', appId, 'public', 'data', 'settlements');
+        await addDoc(ref, {
+          from,
+          to,
+          amount,
+          date,
+          createdAt: new Date().toISOString()
+        });
+        closeSettlementModal();
+        showToast("Movimento registrato!");
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Modal di eliminazione custom
+    let activeDeleteCall = null;
+    window.deleteItem = function(collectionName, id, message) {
+      document.getElementById('delete-confirm-message').innerText = message;
+      document.getElementById('modal-delete').classList.remove('hidden');
+      
+      activeDeleteCall = async () => {
+        try {
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', collectionName, id);
+          await deleteDoc(docRef);
+          showToast("Voce rimossa!");
+        } catch(err) {
+          console.error(err);
+        } finally {
+          closeDeleteModal();
+        }
+      }
+    }
+    function closeDeleteModal() {
+      document.getElementById('modal-delete').classList.add('hidden');
+      activeDeleteCall = null;
+    }
+    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+      if(activeDeleteCall) activeDeleteCall();
+    });
+
+    // Utility di formattazione
+    function formatCurrency(val) {
+      return "€ " + val.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function showToast(msg, type = "success") {
+      const el = document.getElementById('toast');
+      const text = document.getElementById('toast-text');
+      text.innerText = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+
+    function initFormDates() {
+      const today = new Date();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedDate = `${selectedYear}-${month}-${day}`;
+      
+      document.getElementById('new-pay-date').value = formattedDate;
+      document.getElementById('new-set-date').value = formattedDate;
+    }
+
+    function getProjectDetailsForPayment(projId) {
+      const project = projects.find(p => p.id === projId);
+      if (!project) return { projectName: 'Progetto Sconosciuto', clientName: 'Cliente Sconosciuto' };
+      const client = clients.find(c => c.id === project.clientId);
+      return {
+        projectName: project.name,
+        clientName: client ? client.name : 'Cliente Sconosciuto'
+      };
+    }
+  </script>
+
+  <!-- REGISTRAZIONE SERVICE WORKER PER PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker Registrato!', reg))
+          .catch(err => console.error('Errore registrazione Service Worker:', err));
+      });
+    }
+  </script>
+</body>
+</html>
