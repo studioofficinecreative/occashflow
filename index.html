@@ -155,6 +155,17 @@
           </div>
         </div>
 
+        <!-- Sezione Rendiconto ed Andamento Mensile -->
+        <div class="space-y-2.5">
+          <div class="flex justify-between items-center px-1">
+            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Andamento Mensile</h3>
+            <span class="text-[9px] text-slate-400">Raggruppato</span>
+          </div>
+          <div id="monthly-breakdown-container" class="space-y-2.5">
+            <!-- Riempito via JavaScript con il riepilogo mensile dell'esercizio -->
+          </div>
+        </div>
+
         <!-- Sezione Compensazioni Consigliate -->
         <div class="space-y-2.5">
           <div class="flex justify-between items-center px-1">
@@ -210,8 +221,8 @@
             + Entrata
           </button>
         </div>
-        <div id="payments-list-container" class="space-y-2.5">
-          <!-- Riempito via JavaScript -->
+        <div id="payments-list-container" class="space-y-4">
+          <!-- Riempito via JavaScript raggruppando per mese -->
         </div>
       </section>
 
@@ -226,8 +237,8 @@
             + Registra Saldo
           </button>
         </div>
-        <div id="settlements-list-container" class="space-y-2.5">
-          <!-- Riempito via JavaScript -->
+        <div id="settlements-list-container" class="space-y-4">
+          <!-- Riempito via JavaScript raggruppando per mese -->
         </div>
       </section>
 
@@ -412,7 +423,7 @@
     <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4 text-center">
       <div class="w-10 h-10 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center mx-auto">
         <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
       <div class="space-y-1">
@@ -477,6 +488,12 @@
     ];
 
     const AVAILABLE_YEARS = [2024, 2025, 2026, 2027, 2028];
+
+    // Nomi dei mesi in lingua italiana
+    const MONTHS_NAMES = [
+      "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+      "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ];
 
     // Esposizione funzioni al window scope
     window.switchTab = switchTab;
@@ -677,6 +694,7 @@
       renderPayments(filteredPayments);
       renderSettlements(filteredSettlements);
       populateProjectDropdown(filteredProjects);
+      renderMonthlyBreakdown(filteredPayments);
     }
 
     // ==========================================
@@ -703,6 +721,62 @@
       renderYearsSelector();
       initFormDates();
       processAndRender();
+    }
+
+    // Parsing robusto del mese da data in formato YYYY-MM-DD
+    function getMonthFromDateString(dateStr) {
+      if (!dateStr) return 0;
+      const parts = dateStr.split('-');
+      if (parts.length < 2) return 0;
+      return parseInt(parts[1], 10) - 1; // 0-11
+    }
+
+    // Rendering dell'andamento mensile condensato sulla dashboard
+    function renderMonthlyBreakdown(filteredPayments) {
+      const container = document.getElementById('monthly-breakdown-container');
+      if (!container) return;
+      
+      if (filteredPayments.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-100 rounded-2xl p-6 text-center shadow-sm">
+            <p class="text-xs font-bold text-slate-500">Nessun dato registrato</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">I dati dell'anno verranno divisi mese per mese.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const monthlyData = {};
+      filteredPayments.forEach(p => {
+        const m = getMonthFromDateString(p.date);
+        if (!monthlyData[m]) {
+          monthlyData[m] = { gross: 0, net: 0, taxes: 0 };
+        }
+        const gross = parseFloat(p.amount) || 0;
+        monthlyData[m].gross += gross;
+        monthlyData[m].taxes += gross * (taxRate / 100);
+        monthlyData[m].net += gross * (1 - taxRate / 100);
+      });
+
+      const sortedMonths = Object.keys(monthlyData).sort((a, b) => b - a);
+
+      container.innerHTML = sortedMonths.map(mStr => {
+        const m = parseInt(mStr);
+        const data = monthlyData[m];
+        const monthName = MONTHS_NAMES[m];
+        return `
+          <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-black text-slate-800">${monthName}</span>
+              <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50/50 px-2 py-0.5 rounded-full">Netto: € ${data.net.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50 text-[10px] text-slate-500">
+              <div>Lordo: <span class="font-bold text-slate-700">€ ${data.gross.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+              <div class="text-right">Ritenute: <span class="font-bold text-rose-500">€ ${data.taxes.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function renderCompensations(transfers) {
@@ -740,7 +814,7 @@
               
               <div class="flex flex-col items-center">
                 <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
                 <span class="text-[10px] text-indigo-600 font-extrabold mt-0.5">€ ${t.amount.toFixed(2)}</span>
               </div>
@@ -930,6 +1004,7 @@
       }).join('');
     }
 
+    // Rendering raggruppato mese per mese per le rimesse esterne
     function renderPayments(filteredPayments) {
       const container = document.getElementById('payments-list-container');
       if (filteredPayments.length === 0) {
@@ -942,49 +1017,78 @@
         return;
       }
 
-      container.innerHTML = filteredPayments.map(p => {
-        const details = getProjectDetailsForPayment(p.projectId);
-        const receiverTeam = TEAM.find(t => t.id === p.receiver);
-        const gross = parseFloat(p.amount) || 0;
-        const net = gross * (1 - taxRate / 100);
+      const groups = {};
+      filteredPayments.forEach(p => {
+        const m = getMonthFromDateString(p.date);
+        if (!groups[m]) groups[m] = [];
+        groups[m].push(p);
+      });
 
-        return `
-          <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
-            <div class="space-y-1 flex-1 mr-3">
-              <div class="flex items-center space-x-2">
-                <span class="inline-flex px-2 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-wider ${receiverTeam?.bg} ${receiverTeam?.text} border ${receiverTeam?.border}">
-                  Incasso ${receiverTeam?.name}
-                </span>
-                <span class="text-[9px] text-slate-400">${p.date}</span>
+      const sortedMonths = Object.keys(groups).sort((a, b) => b - a);
+
+      container.innerHTML = sortedMonths.map(mStr => {
+        const m = parseInt(mStr);
+        const pays = groups[m];
+        const monthName = MONTHS_NAMES[m];
+        const monthlyTotal = pays.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+        const itemsHtml = pays.map(p => {
+          const details = getProjectDetailsForPayment(p.projectId);
+          const receiverTeam = TEAM.find(t => t.id === p.receiver);
+          const gross = parseFloat(p.amount) || 0;
+          const net = gross * (1 - taxRate / 100);
+
+          return `
+            <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+              <div class="space-y-1 flex-1 mr-3">
+                <div class="flex items-center space-x-2">
+                  <span class="inline-flex px-2 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-wider ${receiverTeam?.bg} ${receiverTeam?.text} border ${receiverTeam?.border}">
+                    Incasso ${receiverTeam?.name}
+                  </span>
+                  <span class="text-[9px] text-slate-400">${p.date}</span>
+                </div>
+                <div>
+                  <h4 class="text-[10px] text-slate-400 font-bold uppercase">${details.clientName}</h4>
+                  <p class="text-xs font-extrabold text-slate-700 leading-tight">${details.projectName}</p>
+                  ${p.description ? `<p class="text-[10px] text-slate-400 mt-0.5 italic">"${p.description}"</p>` : ''}
+                </div>
               </div>
-              <div>
-                <h4 class="text-[10px] text-slate-400 font-bold uppercase">${details.clientName}</h4>
-                <p class="text-xs font-extrabold text-slate-700 leading-tight">${details.projectName}</p>
-                ${p.description ? `<p class="text-[10px] text-slate-400 mt-0.5 italic">"${p.description}"</p>` : ''}
+              
+              <div class="flex items-center space-x-2 text-right shrink-0">
+                <div class="mr-2">
+                  <p class="text-sm font-extrabold text-slate-800">€ ${gross.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+                  <p class="text-[8px] text-slate-400 uppercase font-semibold">Lordo (Netto: € ${net.toFixed(0)})</p>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <button onclick="editPayment('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button onclick="deletePayment('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
+                    <span class="text-xs px-1">✕</span>
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div class="flex items-center space-x-2 text-right shrink-0">
-              <div class="mr-2">
-                <p class="text-sm font-extrabold text-slate-800">€ ${gross.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
-                <p class="text-[8px] text-slate-400 uppercase font-semibold">Lordo (Netto: € ${net.toFixed(0)})</p>
-              </div>
-              <div class="flex items-center space-x-1">
-                <button onclick="editPayment('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-                <button onclick="deletePayment('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
-                  <span class="text-xs px-1">✕</span>
-                </button>
-              </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="space-y-2">
+            <div class="flex justify-between items-center px-1 pt-2">
+              <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">${monthName} ${selectedYear}</span>
+              <span class="text-[10px] font-extrabold text-slate-400">Totale Mese: € ${monthlyTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="space-y-2.5">
+              ${itemsHtml}
             </div>
           </div>
         `;
       }).join('');
     }
 
+    // Rendering raggruppato mese per mese per i saldi interni
     function renderSettlements(filteredSettlements) {
       const container = document.getElementById('settlements-list-container');
       if (filteredSettlements.length === 0) {
@@ -997,46 +1101,74 @@
         return;
       }
 
-      container.innerHTML = filteredSettlements.map(set => {
-        const fromM = TEAM.find(t => t.id === set.from);
-        const toM = TEAM.find(t => t.id === set.to);
-        const amt = parseFloat(set.amount) || 0;
+      const groups = {};
+      filteredSettlements.forEach(s => {
+        const m = getMonthFromDateString(s.date);
+        if (!groups[m]) groups[m] = [];
+        groups[m].push(s);
+      });
 
-        return `
-          <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
-            <div class="flex items-center space-x-2.5">
-              <div class="flex items-center -space-x-1.5">
-                <span class="w-6 h-6 rounded-lg bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center font-bold text-[10px]">
-                  ${fromM?.avatar}
-                </span>
-                <span class="text-slate-300 text-[9px] px-0.5">→</span>
-                <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-500 border border-emerald-100 flex items-center justify-center font-bold text-[10px]">
-                  ${toM?.avatar}
-                </span>
+      const sortedMonths = Object.keys(groups).sort((a, b) => b - a);
+
+      container.innerHTML = sortedMonths.map(mStr => {
+        const m = parseInt(mStr);
+        const sems = groups[m];
+        const monthName = MONTHS_NAMES[m];
+        const monthlyTotal = sems.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0);
+
+        const itemsHtml = sems.map(set => {
+          const fromM = TEAM.find(t => t.id === set.from);
+          const toM = TEAM.find(t => t.id === set.to);
+          const amt = parseFloat(set.amount) || 0;
+
+          return `
+            <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+              <div class="flex items-center space-x-2.5">
+                <div class="flex items-center -space-x-1.5">
+                  <span class="w-6 h-6 rounded-lg bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center font-bold text-[10px]">
+                    ${fromM?.avatar}
+                  </span>
+                  <span class="text-slate-300 text-[9px] px-0.5">→</span>
+                  <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-500 border border-emerald-100 flex items-center justify-center font-bold text-[10px]">
+                    ${toM?.avatar}
+                  </span>
+                </div>
+                <div>
+                  <p class="text-[11px] text-slate-700 font-bold">
+                    ${fromM?.name} a ${toM?.name}
+                  </p>
+                  <p class="text-[8px] text-slate-400">${set.date}</p>
+                </div>
               </div>
-              <div>
-                <p class="text-[11px] text-slate-700 font-bold">
-                  ${fromM?.name} a ${toM?.name}
-                </p>
-                <p class="text-[8px] text-slate-400">${set.date}</p>
+
+              <div class="flex items-center space-x-2 text-right shrink-0">
+                <div class="mr-2">
+                  <p class="text-xs font-extrabold text-slate-800">€ ${amt.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+                  <p class="text-[8px] text-slate-400 uppercase font-semibold">Saldo Interno</p>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <button onclick="editSettlement('${set.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button onclick="deleteSettlement('${set.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
+                    <span class="text-xs px-1">✕</span>
+                  </button>
+                </div>
               </div>
             </div>
+          `;
+        }).join('');
 
-            <div class="flex items-center space-x-2 text-right shrink-0">
-              <div class="mr-2">
-                <p class="text-xs font-extrabold text-slate-800">€ ${amt.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
-                <p class="text-[8px] text-slate-400 uppercase font-semibold">Saldo Interno</p>
-              </div>
-              <div class="flex items-center space-x-1">
-                <button onclick="editSettlement('${set.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-                <button onclick="deleteSettlement('${set.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
-                  <span class="text-xs px-1">✕</span>
-                </button>
-              </div>
+        return `
+          <div class="space-y-2">
+            <div class="flex justify-between items-center px-1 pt-2">
+              <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">${monthName} ${selectedYear}</span>
+              <span class="text-[10px] font-extrabold text-slate-400">Totale Compensazioni: € ${monthlyTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="space-y-2.5">
+              ${itemsHtml}
             </div>
           </div>
         `;
