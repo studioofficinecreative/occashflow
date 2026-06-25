@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/money-transfer.png">
+  <link class="apple-touch-icon" rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/money-transfer.png">
   
   <style>
     /* Rimozione barra di scorrimento estetica */
@@ -85,6 +85,17 @@
           </p>
           <div class="flex items-center space-x-3">
             <input type="range" min="0" max="100" value="20" id="tax-slider" oninput="updateTaxRateLocal(this.value)" onchange="saveTaxRateCloud(this.value)" class="w-full accent-indigo-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer" />
+          </div>
+
+          <!-- Sezione Installazione PWA (Compare dinamicamente) -->
+          <div id="install-pwa-container" class="pt-3 border-t border-indigo-100/50 flex justify-between items-center hidden">
+            <div>
+              <span class="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider block">Applicazione Installabile</span>
+              <span class="text-[9px] text-slate-400 block">Accedi rapido dalla schermata home</span>
+            </div>
+            <button id="btn-install-pwa" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all active:scale-[0.98]">
+              Installa App
+            </button>
           </div>
 
           <!-- Pulsante di Reset Database Integrato -->
@@ -471,6 +482,7 @@
     window.updateTaxRateLocal = updateTaxRateLocal;
     window.saveTaxRateCloud = saveTaxRateCloud;
     window.selectYear = selectYear;
+    window.quickSettle = quickSettle;
     
     window.openClientModal = openClientModal;
     window.closeClientModal = closeClientModal;
@@ -710,7 +722,6 @@
       container.innerHTML = transfers.map(t => {
         const fromMember = TEAM.find(m => m.id === t.from);
         const toMember = TEAM.find(m => m.id === t.to);
-        const dataPayload = JSON.stringify(t).replace(/"/g, '&quot;');
         return `
           <div class="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-sm">
             <div class="flex items-center justify-between">
@@ -742,9 +753,9 @@
               </div>
             </div>
 
-            <button onclick='quickSettle(${dataPayload})' class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-100 py-2 rounded-xl text-[10px] font-bold text-slate-600 flex items-center justify-center space-x-1.5 transition-all">
+            <button onclick="quickSettle('${t.from}', '${t.to}', ${t.amount})" class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-100 py-2 rounded-xl text-[10px] font-bold text-slate-600 flex items-center justify-center space-x-1.5 transition-all">
               <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
               <span>Registra Movimento Interno</span>
             </button>
@@ -1308,6 +1319,15 @@
       document.getElementById('new-set-amount').value = '';
       editingSettlementId = null;
     }
+    
+    // Riscritto per supportare argomenti multipli separati da virgole anziché parsing JSON inline instabile
+    function quickSettle(from, to, amount) {
+      document.getElementById('new-set-from').value = from;
+      document.getElementById('new-set-to').value = to;
+      document.getElementById('new-set-amount').value = parseFloat(amount).toFixed(2);
+      openSettlementModal();
+    }
+
     async function saveSettlement(e) {
       e.preventDefault();
       const from = document.getElementById('new-set-from').value;
@@ -1475,17 +1495,53 @@
     }
   </script>
 
-  <!-- REGISTRAZIONE SERVICE WORKER PER PWA (CORRETTA) -->
+  <!-- REGISTRAZIONE SERVICE WORKER E CUSTOM INSTALLER PER PWA (CORRETTA) -->
   <script>
+    let deferredPrompt;
+    
+    // Ascolta l'evento prima dell'installazione per gestire il pulsante personalizzato
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installContainer = document.getElementById('install-pwa-container');
+      if (installContainer) {
+        installContainer.classList.remove('hidden');
+      }
+    });
+
+    // Gestione clic del pulsante di installazione custom
+    document.addEventListener('click', async (e) => {
+      if (e.target && e.target.id === 'btn-install-pwa') {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log('Scelta installazione utente:', outcome);
+          deferredPrompt = null;
+          const installContainer = document.getElementById('install-pwa-container');
+          if (installContainer) {
+            installContainer.classList.add('hidden');
+          }
+        }
+      }
+    });
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Registra il Service Worker solo quando l'applicazione è eseguita nella finestra principale (evitando problemi in iframe/sandbox)
-        if (window.self === window.top && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
-          navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker Registrato!', reg))
+        // Verifica se l'applicazione si trova in un host locale o in un dominio sicuro protetto da SSL
+        const isLocalhost = Boolean(
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '[::1]' ||
+          window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+        );
+        const isSecureContext = window.location.protocol === 'https:' || isLocalhost;
+
+        // Registra il Service Worker solo quando l'applicazione è eseguita nella finestra principale in contesti sicuri
+        if (window.self === window.top && isSecureContext) {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker Registrato con successo!', reg))
             .catch(err => console.error('Errore registrazione Service Worker:', err));
         } else {
-          console.log('Esecuzione in ambiente sandbox o iframe: registrazione Service Worker bypassata.');
+          console.log('Registrazione Service Worker bypassata (scenari: iframe di anteprima, sandbox o protocollo non sicuro).');
         }
       });
     }
