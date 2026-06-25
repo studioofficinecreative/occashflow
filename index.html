@@ -403,6 +403,15 @@
             </select>
           </div>
         </div>
+        
+        <!-- Menu a discesa per associare un Progetto al Saldo Interno -->
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Progetto Associato</label>
+          <select id="new-set-proj-id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-600 focus:outline-none focus:border-indigo-400">
+            <!-- Popolato via JS -->
+          </select>
+        </div>
+
         <div class="space-y-1">
           <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Somma Inviata Netta (€)</label>
           <input type="number" step="0.01" id="new-set-amount" placeholder="Es. 350" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
@@ -423,7 +432,7 @@
     <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4 text-center">
       <div class="w-10 h-10 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center mx-auto">
         <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
       <div class="space-y-1">
@@ -814,7 +823,7 @@
               
               <div class="flex flex-col items-center">
                 <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
                 <span class="text-[10px] text-indigo-600 font-extrabold mt-0.5">€ ${t.amount.toFixed(2)}</span>
               </div>
@@ -1088,7 +1097,7 @@
       }).join('');
     }
 
-    // Rendering raggruppato mese per mese per i saldi interni
+    // Rendering raggruppato mese per mese per i saldi interni, comprensivo di Cliente e Progetto associato
     function renderSettlements(filteredSettlements) {
       const container = document.getElementById('settlements-list-container');
       if (filteredSettlements.length === 0) {
@@ -1121,6 +1130,11 @@
           const toM = TEAM.find(t => t.id === set.to);
           const amt = parseFloat(set.amount) || 0;
 
+          // Recupero dei dettagli del progetto e del cliente
+          const details = set.projectId 
+            ? getProjectDetailsForPayment(set.projectId) 
+            : { projectName: 'Generale / Altro', clientName: 'OC CashFlow' };
+
           return `
             <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
               <div class="flex items-center space-x-2.5">
@@ -1137,7 +1151,15 @@
                   <p class="text-[11px] text-slate-700 font-bold">
                     ${fromM?.name} a ${toM?.name}
                   </p>
-                  <p class="text-[8px] text-slate-400">${set.date}</p>
+                  
+                  <!-- Mostra il Cliente e il Progetto associato alla compensazione -->
+                  <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 leading-tight">
+                    <span class="text-[9px] font-black text-indigo-500 uppercase tracking-wide">${details.clientName}</span>
+                    <span class="text-slate-300 text-[9px]">•</span>
+                    <span class="text-[9px] text-slate-400 font-semibold">${details.projectName}</span>
+                  </div>
+                  
+                  <p class="text-[8px] text-slate-400 mt-1">${set.date}</p>
                 </div>
               </div>
 
@@ -1176,18 +1198,22 @@
     }
 
     function populateProjectDropdown(filteredProjects) {
-      const select = document.getElementById('new-pay-proj-id');
-      if (!select) return;
+      const selectPay = document.getElementById('new-pay-proj-id');
+      const selectSet = document.getElementById('new-set-proj-id');
+      
+      const optionsHtml = filteredProjects.length === 0 
+        ? `<option value="" disabled>Nessun progetto per il ${selectedYear}</option>`
+        : filteredProjects.map(p => {
+            const client = clients.find(c => c.id === p.clientId);
+            return `<option value="${p.id}">${client ? client.name : 'Cliente'} - ${p.name}</option>`;
+          }).join('');
 
-      if (filteredProjects.length === 0) {
-        select.innerHTML = `<option value="" disabled>Nessun progetto per il ${selectedYear}</option>`;
-        return;
+      if (selectPay) selectPay.innerHTML = optionsHtml;
+      
+      // I saldi manuali o di regolazione possono anche essere generici (non legati a un singolo progetto)
+      if (selectSet) {
+        selectSet.innerHTML = `<option value="">Generale / Altro</option>` + optionsHtml;
       }
-
-      select.innerHTML = filteredProjects.map(p => {
-        const client = clients.find(c => c.id === p.clientId);
-        return `<option value="${p.id}">${client ? client.name : 'Cliente'} - ${p.name}</option>`;
-      }).join('');
     }
 
     // ==========================================
@@ -1470,6 +1496,7 @@
     function closeSettlementModal() {
       document.getElementById('modal-settlement').classList.add('hidden');
       document.getElementById('new-set-amount').value = '';
+      document.getElementById('new-set-proj-id').value = '';
       editingSettlementId = null;
     }
     
@@ -1478,6 +1505,7 @@
       document.getElementById('new-set-from').value = from;
       document.getElementById('new-set-to').value = to;
       document.getElementById('new-set-amount').value = parseFloat(amount).toFixed(2);
+      document.getElementById('new-set-proj-id').value = ''; // Di default i saldi auto-calcolati sono generali
       openSettlementModal();
     }
 
@@ -1487,6 +1515,7 @@
       const to = document.getElementById('new-set-to').value;
       const amount = parseFloat(document.getElementById('new-set-amount').value);
       const date = document.getElementById('new-set-date').value;
+      const projectId = document.getElementById('new-set-proj-id').value || "";
 
       if(from === to || isNaN(amount)) {
         showToast("Scegli due persone diverse!", "error");
@@ -1496,7 +1525,7 @@
       try {
         if (editingSettlementId) {
           const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settlements', editingSettlementId);
-          await setDoc(docRef, { from, to, amount, date }, { merge: true });
+          await setDoc(docRef, { from, to, amount, date, projectId }, { merge: true });
           showToast("Compensazione modificata!");
         } else {
           const ref = collection(db, 'artifacts', appId, 'public', 'data', 'settlements');
@@ -1505,6 +1534,7 @@
             to,
             amount,
             date,
+            projectId,
             createdAt: new Date().toISOString()
           });
           showToast("Movimento registrato!");
@@ -1522,6 +1552,7 @@
       document.getElementById('new-set-to').value = set.to;
       document.getElementById('new-set-amount').value = set.amount;
       document.getElementById('new-set-date').value = set.date;
+      document.getElementById('new-set-proj-id').value = set.projectId || "";
       document.getElementById('modal-settlement-title').innerText = "Modifica Movimento Interno";
       document.getElementById('modal-settlement').classList.remove('hidden');
     }
