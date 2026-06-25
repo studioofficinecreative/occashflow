@@ -81,7 +81,7 @@
             <span id="tax-badge" class="text-xs font-black text-indigo-700 bg-white px-2 py-0.5 rounded-lg shadow-sm border border-indigo-100">20%</span>
           </div>
           <p class="text-[10px] text-indigo-950/70 leading-relaxed">
-            Ogni entrata registrata dai clienti verrà depurata di questa percentuale prima della divisione in parti uguali.
+            Ogni entrata registrata dai clienti verra depurata di questa percentuale prima della divisione in parti uguali.
           </p>
           <div class="flex items-center space-x-3">
             <input type="range" min="0" max="100" value="20" id="tax-slider" oninput="updateTaxRateLocal(this.value)" onchange="saveTaxRateCloud(this.value)" class="w-full accent-indigo-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer" />
@@ -483,6 +483,7 @@
     window.saveTaxRateCloud = saveTaxRateCloud;
     window.selectYear = selectYear;
     window.quickSettle = quickSettle;
+    window.showToast = showToast;
     
     window.openClientModal = openClientModal;
     window.closeClientModal = closeClientModal;
@@ -863,15 +864,13 @@
                 </div>
               </div>
               <div class="flex items-center space-x-1 shrink-0">
-                <button onclick="editProject('${proj.id}')" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-colors" title="Modifica">
+                <button onclick="editProject('${proj.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-colors" title="Modifica">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button onclick="deleteProject('${proj.id}')" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors" title="Elimina">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
-                  </svg>
+                <button onclick="deleteProject('${proj.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
+                  <span class="text-xs px-1">✕</span>
                 </button>
               </div>
             </div>
@@ -886,15 +885,13 @@
                 <p class="text-[10px] text-slate-400">${clientProjects.length} ${clientProjects.length === 1 ? 'progetto' : 'progetti'} nel ${selectedYear}</p>
               </div>
               <div class="flex items-center space-x-1">
-                <button onclick="editClient('${client.id}')" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
+                <button onclick="editClient('${client.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button onclick="deleteClient('${client.id}')" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all" title="Elimina">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
-                  </svg>
+                <button onclick="deleteClient('${client.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
+                  <span class="text-xs px-1">✕</span>
                 </button>
               </div>
             </div>
@@ -971,15 +968,13 @@
                 <p class="text-[8px] text-slate-400 uppercase font-semibold">Lordo (Netto: € ${net.toFixed(0)})</p>
               </div>
               <div class="flex items-center space-x-1">
-                <button onclick="editPayment('${p.id}')" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
+                <button onclick="editPayment('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button onclick="deletePayment('${p.id}')" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all" title="Elimina">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
-                  </svg>
+                <button onclick="deletePayment('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
+                  <span class="text-xs px-1">✕</span>
                 </button>
               </div>
             </div>
@@ -1031,15 +1026,13 @@
                 <p class="text-[8px] text-slate-400 uppercase font-semibold">Saldo Interno</p>
               </div>
               <div class="flex items-center space-x-1">
-                <button onclick="editSettlement('${set.id}')" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
+                <button onclick="editSettlement('${set.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button onclick="deleteSettlement('${set.id}')" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all" title="Elimina">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" />
-                  </svg>
+                <button onclick="deleteSettlement('${set.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
+                  <span class="text-xs px-1">✕</span>
                 </button>
               </div>
             </div>
@@ -1082,6 +1075,32 @@
       const el = document.getElementById('settings-card');
       el.classList.toggle('hidden');
     }
+
+    // GESTIONE CONFERME DI ELIMINAZIONE E RESET
+    let activeConfirmCall = null;
+    function showConfirmModal(message, confirmCallback, isDanger = false) {
+      document.getElementById('delete-confirm-message').innerText = message;
+      const btn = document.getElementById('btn-confirm-delete');
+      
+      if (isDanger) {
+        btn.className = "bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl text-[10px] font-bold transition-all";
+      } else {
+        btn.className = "bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-xl text-[10px] font-bold transition-all";
+      }
+      
+      document.getElementById('modal-delete').classList.remove('hidden');
+      activeConfirmCall = confirmCallback;
+    }
+    function closeDeleteModal() {
+      document.getElementById('modal-delete').classList.add('hidden');
+      activeConfirmCall = null;
+    }
+    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+      if (activeConfirmCall) {
+        activeConfirmCall();
+        closeDeleteModal();
+      }
+    });
 
     function updateTaxRateLocal(val) {
       document.getElementById('tax-badge').innerText = val + '%';
@@ -1389,72 +1408,41 @@
       );
     }
 
-    // GESTIONE CONFERME DI ELIMINAZIONE E RESET
-    let activeConfirmCall = null;
-    function showConfirmModal(message, confirmCallback, isDanger = false) {
-      document.getElementById('delete-confirm-message').innerText = message;
-      const btn = document.getElementById('btn-confirm-delete');
-      
-      if (isDanger) {
-        btn.className = "bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl text-[10px] font-bold transition-all";
-      } else {
-        btn.className = "bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-xl text-[10px] font-bold transition-all";
-      }
-      
-      document.getElementById('modal-delete').classList.remove('hidden');
-      activeConfirmCall = confirmCallback;
-    }
-    function closeDeleteModal() {
-      document.getElementById('modal-delete').classList.add('hidden');
-      activeConfirmCall = null;
-    }
-    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
-      if (activeConfirmCall) {
-        activeConfirmCall();
-        closeDeleteModal();
-      }
-    });
-
-    // TRIGGER RESET COMPLETO DATABASE
+    // TRIGGER RESET COMPLETO DATABASE (Risolto conflitto modale e aggiunto Reload immediato)
     function triggerDatabaseReset() {
       showConfirmModal(
-        "ATTENZIONE: Sei sicuro di voler resettare COMPLETAMENTE il database? Questa azione è irreversibile e rimuoverà per sempre tutti i clienti, i progetti, le entrate e i movimenti interni registrati finora per tutti gli anni.",
+        "ATTENZIONE: Sei sicuro di voler resettare COMPLETAMENTE il database? Questa azione è irreversibile e rimuoverà per sempre tutti i clienti, i progetti, le entrate e le compensazioni registrate finora per tutti gli anni. L'app verrà riavviata automaticamente.",
         async () => {
-          // Ulteriore conferma di sicurezza interna prima di procedere
-          showConfirmModal(
-            "CONFERMA FINALE: Sei davvero convinto al 100%? Tutti i dati andranno persi immediatamente.",
-            async () => {
-              showToast("Reset del database in corso...");
-              try {
-                // Rimozione di tutte le rimesse
-                for (const p of payments) {
-                  await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', p.id));
-                }
-                // Rimozione di tutti i progetti
-                for (const pr of projects) {
-                  await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', pr.id));
-                }
-                // Rimozione di tutti i clienti
-                for (const cl of clients) {
-                  await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'clients', cl.id));
-                }
-                // Rimozione di tutte le compensazioni interne
-                for (const s of settlements) {
-                  await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settlements', s.id));
-                }
-                // Ripristino aliquota tasse standard al 20%
-                const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global');
-                await setDoc(settingsRef, { taxRate: 20 });
-                
-                showToast("Database ripulito con successo!");
-                toggleSettings();
-              } catch (err) {
-                console.error("Errore nel reset:", err);
-                showToast("Errore durante il reset", "error");
-              }
-            },
-            true
-          );
+          showToast("Reset del database in corso...");
+          try {
+            // Rimozione di tutte le entrate
+            for (const p of payments) {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', p.id));
+            }
+            // Rimozione di tutti i progetti
+            for (const pr of projects) {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', pr.id));
+            }
+            // Rimozione di tutti i clienti
+            for (const cl of clients) {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'clients', cl.id));
+            }
+            // Rimozione di tutte le compensazioni interne
+            for (const s of settlements) {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settlements', s.id));
+            }
+            // Ripristino aliquota tasse standard al 20%
+            const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global');
+            await setDoc(settingsRef, { taxRate: 20 });
+            
+            showToast("Database resettato con successo! Riavvio...");
+            setTimeout(() => {
+              window.location.reload();
+            }, 1200);
+          } catch (err) {
+            console.error("Errore nel reset:", err);
+            showToast("Errore durante il reset", "error");
+          }
         },
         true
       );
@@ -1468,9 +1456,11 @@
     function showToast(msg, type = "success") {
       const el = document.getElementById('toast');
       const text = document.getElementById('toast-text');
-      text.innerText = msg;
-      el.classList.remove('hidden');
-      setTimeout(() => el.classList.add('hidden'), 3000);
+      if (text) text.innerText = msg;
+      if (el) el.classList.remove('hidden');
+      setTimeout(() => {
+        if (el) el.classList.add('hidden');
+      }, 3000);
     }
 
     // Inizializza la data dei form allineata con l'anno corrente
