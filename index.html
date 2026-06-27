@@ -226,7 +226,28 @@
         </div>
       </section>
 
-      <!-- TAB 4: COMPENSAZIONI -->
+      <!-- TAB 4: SPESE AZIENDALI -->
+      <section id="tab-expenses" class="space-y-6 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-extrabold text-slate-800">Spese Aziendali</h2>
+            <p class="text-[10px] text-slate-400 mt-0.5">Gestione delle spese per il <span class="current-year-placeholder">2026</span></p>
+          </div>
+          <button onclick="openExpenseModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98]">
+            + Spesa
+          </button>
+        </div>
+        <!-- Sotto-tab Spese -->
+        <div class="flex bg-white/40 p-1 rounded-xl border border-slate-100">
+          <button onclick="switchExpenseSubTab('pending')" id="subtab-exp-pending" class="flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all bg-white text-indigo-600 shadow-sm border border-slate-100">Da Affrontare</button>
+          <button onclick="switchExpenseSubTab('covered')" id="subtab-exp-covered" class="flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all text-slate-500">Affrontate / Coperte</button>
+        </div>
+        <div id="expenses-list-container" class="space-y-4">
+          <!-- Riempito via JavaScript raggruppando per mese -->
+        </div>
+      </section>
+
+      <!-- TAB 5: COMPENSAZIONI (SALDI) -->
       <section id="tab-settlements" class="space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div>
@@ -246,7 +267,7 @@
 
     <!-- BOTTOM NAVIGATION -->
     <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-100 pb-safe shadow-lg">
-      <div class="max-w-md mx-auto grid grid-cols-4 gap-1 px-2 py-2">
+      <div class="max-w-md mx-auto grid grid-cols-5 gap-1 px-2 py-2">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-indigo-600 bg-indigo-50/50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -264,6 +285,12 @@
             <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Entrate</span>
+        </button>
+        <button onclick="switchTab('expenses')" id="nav-expenses" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
+          </svg>
+          <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Spese</span>
         </button>
         <button onclick="switchTab('settlements')" id="nav-settlements" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,6 +385,21 @@
           <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Importo LORDO Ricevuto (€)</label>
           <input type="number" step="0.01" id="new-pay-amount" placeholder="Es. 3000" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
         </div>
+
+        <!-- SELEZIONE SPESA DA COPRIRE (OPZIONALE) -->
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Decurta per una Spesa (Opzionale)</label>
+          <select id="new-pay-expense-id" onchange="onPaymentExpenseChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-600 focus:outline-none">
+            <option value="">Nessuna spesa da detrarre</option>
+            <!-- Popolato via JS con le spese pendenti -->
+          </select>
+        </div>
+
+        <div id="new-pay-expense-deduction-container" class="space-y-1 hidden">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Quota da detrarre per la spesa (€)</label>
+          <input type="number" step="0.01" id="new-pay-expense-deduction" placeholder="Es. 200" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 focus:outline-none focus:border-indigo-400" />
+        </div>
+
         <div class="grid grid-cols-2 gap-2">
           <div class="space-y-1">
             <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Data Incasso</label>
@@ -370,6 +412,35 @@
         </div>
         <button type="submit" id="btn-save-payment" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all">
           Registra Entrata Lorda
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL NUOVA SPESA / MODIFICA SPESA -->
+  <div id="modal-expense" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white border border-slate-100 w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 id="modal-expense-title" class="text-sm font-extrabold text-slate-800">Crea Nuova Spesa</h3>
+        <button onclick="closeExpenseModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <form onsubmit="saveExpense(event)" class="space-y-4">
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Descrizione / Titolo Spesa</label>
+          <input type="text" id="new-exp-title" placeholder="Es. Licenze Software, Hardware" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Importo Lordo Spesa (€)</label>
+          <input type="number" step="0.01" id="new-exp-amount" placeholder="Es. 350" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-400" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Data Spesa</label>
+          <input type="date" id="new-exp-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-[10px] text-slate-700" />
+        </div>
+        <button type="submit" id="btn-save-expense" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all">
+          Salva Spesa
         </button>
       </form>
     </div>
@@ -482,12 +553,17 @@
     let projects = [];
     let payments = [];
     let settlements = [];
+    let expenses = []; // Nuova collezione spese
+
+    // Sotto-tab Spese: 'pending' (Da affrontare) | 'covered' (Affrontate)
+    let activeExpenseSubTab = 'pending';
 
     // Stati per l'editing
     let editingClientId = null;
     let editingProjectId = null;
     let editingPaymentId = null;
     let editingSettlementId = null;
+    let editingExpenseId = null;
 
     // Ordinati Alfabeticamente: Gianluca, Luca, Roberto
     const TEAM = [
@@ -496,7 +572,7 @@
       { id: 'roberto', name: 'Roberto', color: 'from-emerald-200 to-teal-300', bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', avatar: 'R' }
     ];
 
-    const AVAILABLE_YEARS = [2024, 2025, 2026, 2027, 2028];
+    const AVAILABLE_YEARS_FALLBACK = [2024, 2025, 2026, 2027, 2028];
 
     // Nomi dei mesi in lingua italiana
     const MONTHS_NAMES = [
@@ -531,6 +607,14 @@
     window.savePayment = savePayment;
     window.editPayment = editPayment;
     window.deletePayment = deletePayment;
+    window.onPaymentExpenseChange = onPaymentExpenseChange;
+
+    window.openExpenseModal = openExpenseModal;
+    window.closeExpenseModal = closeExpenseModal;
+    window.saveExpense = saveExpense;
+    window.editExpense = editExpense;
+    window.deleteExpense = deleteExpense;
+    window.switchExpenseSubTab = switchExpenseSubTab;
 
     window.openSettlementModal = openSettlementModal;
     window.closeSettlementModal = closeSettlementModal;
@@ -561,6 +645,7 @@
       const projectsRef = collection(db, 'artifacts', appId, 'public', 'data', 'projects');
       const paymentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'payments');
       const settlementsRef = collection(db, 'artifacts', appId, 'public', 'data', 'settlements');
+      const expensesRef = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
       const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global');
 
       onSnapshot(clientsRef, (snapshot) => {
@@ -589,6 +674,13 @@
         processAndRender();
       });
 
+      onSnapshot(expensesRef, (snapshot) => {
+        expenses = [];
+        snapshot.forEach(doc => expenses.push({ id: doc.id, ...doc.data() }));
+        expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+        processAndRender();
+      });
+
       onSnapshot(settingsRef, (docSnap) => {
         if (docSnap.exists()) {
           taxRate = docSnap.data().taxRate ?? 20;
@@ -606,33 +698,80 @@
       }, 500);
     }
 
+    // Calcolo dinamico degli anni per nascondere anni passati vuoti
+    function getActiveYears() {
+      const years = new Set();
+      const currentYear = 2026;
+      
+      // Mostra sempre l'anno corrente e quello selezionato per permettere l'operatività
+      years.add(currentYear);
+      years.add(selectedYear);
+      
+      // Mostra sempre l'anno immediatamente futuro per pianificazione rimesse
+      years.add(currentYear + 1);
+
+      // Aggiungi gli anni in cui vi è una qualsiasi presenza di dati reali su cloud
+      projects.forEach(p => { if (p.year) years.add(parseInt(p.year)); });
+      payments.forEach(p => {
+        if (p.date) {
+          const y = parseInt(p.date.split('-')[0]);
+          if (y) years.add(y);
+        }
+      });
+      settlements.forEach(s => {
+        if (s.date) {
+          const y = parseInt(s.date.split('-')[0]);
+          if (y) years.add(y);
+        }
+      });
+      expenses.forEach(e => {
+        if (e.date) {
+          const y = parseInt(e.date.split('-')[0]);
+          if (y) years.add(y);
+        }
+      });
+
+      return Array.from(years).sort((a, b) => a - b);
+    }
+
     // ==========================================
-    // MOTORE DI CALCOLO INTERNO
+    // MOTORE DI CALCOLO INTERNO (Con Calcolo Tasse su Imponibile Decurtato)
     // ==========================================
     function processAndRender() {
       const filteredProjects = projects.filter(p => p.year ? p.year === selectedYear : selectedYear === 2026);
       const filteredPayments = payments.filter(p => p.date && p.date.startsWith(selectedYear.toString()));
       const filteredSettlements = settlements.filter(s => s.date && s.date.startsWith(selectedYear.toString()));
+      const filteredExpenses = expenses.filter(e => e.date && e.date.startsWith(selectedYear.toString()));
 
       document.querySelectorAll('.current-year-placeholder').forEach(el => {
         el.innerText = selectedYear;
       });
 
       const directNet = { gianluca: 0, luca: 0, roberto: 0 };
-      const directGross = { gianluca: 0, luca: 0, roberto: 0 };
+      const directGrossRemaining = { gianluca: 0, luca: 0, roberto: 0 };
+      let totalDeductions = 0;
 
+      // Aggancio e decurtazione spese dai singoli pagamenti
       filteredPayments.forEach(p => {
-        const gross = parseFloat(p.amount) || 0;
-        const net = gross * (1 - taxRate / 100);
+        const coveredExps = expenses.filter(e => e.coveredByPaymentId === p.id);
+        const deduction = coveredExps.reduce((sum, e) => sum + (parseFloat(e.amountDeducted) || 0), 0);
+        p.deduction = deduction;
+        p.remainingGross = Math.max(0, (parseFloat(p.amount) || 0) - deduction);
+        
+        totalDeductions += deduction;
+
+        // Le tasse e il netto si calcolano sul rimanente lordo decurtato
+        const net = p.remainingGross * (1 - taxRate / 100);
         if (directNet[p.receiver] !== undefined) {
           directNet[p.receiver] += net;
-          directGross[p.receiver] += gross;
+          directGrossRemaining[p.receiver] += p.remainingGross;
         }
       });
 
       const totalGross = filteredPayments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
-      const totalNet = totalGross * (1 - taxRate / 100);
-      const totalTaxes = totalGross * (taxRate / 100);
+      const totalRemainingGross = Math.max(0, totalGross - totalDeductions);
+      const totalTaxes = totalRemainingGross * (taxRate / 100);
+      const totalNet = totalRemainingGross * (1 - taxRate / 100);
       const fairShare = totalNet / 3;
 
       document.getElementById('total-gross').innerText = formatCurrency(totalGross);
@@ -652,6 +791,7 @@
         if (flows[s.to]) flows[s.to].received += amt;
       });
 
+      // Cassa Personale aggiornata al netto delle tasse e delle detrazioni spese
       const balances = {
         gianluca: fairShare - directNet.gianluca + flows.gianluca.given - flows.gianluca.received,
         luca: fairShare - directNet.luca + flows.luca.given - flows.luca.received,
@@ -696,13 +836,16 @@
         if (cred.amount <= 0.01) cIdx++;
       }
 
+      renderYearsSelector(); 
       renderCompensations(suggestedTransfers);
       renderBalances(balances);
       renderFatturatoSoggetti(directNet, totalNet);
       renderClients(filteredProjects, filteredPayments);
       renderPayments(filteredPayments);
+      renderExpenses(filteredExpenses); // Renderizzazione della tab spese
       renderSettlements(filteredSettlements);
       populateProjectDropdown(filteredProjects);
+      populateExpenseDropdown(filteredExpenses); // Aggiorna elenco spese da coprire nel form pagamento
       renderMonthlyBreakdown(filteredPayments);
     }
 
@@ -711,7 +854,10 @@
     // ==========================================
     function renderYearsSelector() {
       const container = document.getElementById('years-list');
-      container.innerHTML = AVAILABLE_YEARS.map(yr => {
+      if (!container) return;
+      
+      const activeYears = getActiveYears();
+      container.innerHTML = activeYears.map(yr => {
         const isActive = yr === selectedYear;
         return `
           <button onclick="selectYear(${yr})" class="px-3 py-1 rounded-lg text-xs font-bold transition-all ${
@@ -732,7 +878,7 @@
       processAndRender();
     }
 
-    // Parsing robusto del mese da data in formato YYYY-MM-DD
+    // Parsing del mese da data YYYY-MM-DD
     function getMonthFromDateString(dateStr) {
       if (!dateStr) return 0;
       const parts = dateStr.split('-');
@@ -761,10 +907,11 @@
         if (!monthlyData[m]) {
           monthlyData[m] = { gross: 0, net: 0, taxes: 0 };
         }
-        const gross = parseFloat(p.amount) || 0;
-        monthlyData[m].gross += gross;
-        monthlyData[m].taxes += gross * (taxRate / 100);
-        monthlyData[m].net += gross * (1 - taxRate / 100);
+        // Il calcolo mensile tiene conto delle rimesse residue disponibili per la divisione
+        const grossRem = p.remainingGross || 0;
+        monthlyData[m].gross += grossRem;
+        monthlyData[m].taxes += grossRem * (taxRate / 100);
+        monthlyData[m].net += grossRem * (1 - taxRate / 100);
       });
 
       const sortedMonths = Object.keys(monthlyData).sort((a, b) => b - a);
@@ -777,10 +924,10 @@
           <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-2">
             <div class="flex justify-between items-center">
               <span class="text-xs font-black text-slate-800">${monthName}</span>
-              <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50/50 px-2 py-0.5 rounded-full">Netto: € ${data.net.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50/50 px-2 py-0.5 rounded-full">Netto Disp: € ${data.net.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50 text-[10px] text-slate-500">
-              <div>Lordo: <span class="font-bold text-slate-700">€ ${data.gross.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+              <div>Imponibile restante: <span class="font-bold text-slate-700">€ ${data.gross.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
               <div class="text-right">Ritenute: <span class="font-bold text-rose-500">€ ${data.taxes.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
             </div>
           </div>
@@ -823,7 +970,7 @@
               
               <div class="flex flex-col items-center">
                 <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
                 <span class="text-[10px] text-indigo-600 font-extrabold mt-0.5">€ ${t.amount.toFixed(2)}</span>
               </div>
@@ -992,7 +1139,7 @@
                 </div>
                 <div class="flex justify-between text-[9px] text-slate-400 font-semibold">
                   <span>${percentage.toFixed(0)}% Incassato</span>
-                  <span>Rimanente: € ${(clientBudgetLordo - clientCollectedLordo).toLocaleString('it-IT')}</span>
+                  <span>Rimanente: € {(clientBudgetLordo - clientCollectedLordo).toLocaleString('it-IT')}</span>
                 </div>
               </div>
             ` : ''}
@@ -1045,7 +1192,8 @@
           const details = getProjectDetailsForPayment(p.projectId);
           const receiverTeam = TEAM.find(t => t.id === p.receiver);
           const gross = parseFloat(p.amount) || 0;
-          const net = gross * (1 - taxRate / 100);
+          const remainingGross = p.remainingGross ?? gross;
+          const net = remainingGross * (1 - taxRate / 100);
 
           return `
             <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
@@ -1060,13 +1208,20 @@
                   <h4 class="text-[10px] text-slate-400 font-bold uppercase">${details.clientName}</h4>
                   <p class="text-xs font-extrabold text-slate-700 leading-tight">${details.projectName}</p>
                   ${p.description ? `<p class="text-[10px] text-slate-400 mt-0.5 italic">"${p.description}"</p>` : ''}
+                  
+                  <!-- Indicazione di eventuale decurtazione di spese -->
+                  ${p.deduction > 0 ? `
+                    <div class="mt-1 flex items-center text-[9px] text-rose-500 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg w-max">
+                      <span class="mr-1">✕</span> Detratti € ${p.deduction.toFixed(2)} per spese
+                    </div>
+                  ` : ''}
                 </div>
               </div>
               
               <div class="flex items-center space-x-2 text-right shrink-0">
                 <div class="mr-2">
                   <p class="text-sm font-extrabold text-slate-800">€ ${gross.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
-                  <p class="text-[8px] text-slate-400 uppercase font-semibold">Lordo (Netto: € ${net.toFixed(0)})</p>
+                  <p class="text-[8px] text-slate-400 uppercase font-semibold">Lordo ${p.deduction > 0 ? `(Imponibile: € ${remainingGross.toFixed(0)})` : `(Netto: € ${net.toFixed(0)})`}</p>
                 </div>
                 <div class="flex items-center space-x-1">
                   <button onclick="editPayment('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
@@ -1088,6 +1243,100 @@
             <div class="flex justify-between items-center px-1 pt-2">
               <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">${monthName} ${selectedYear}</span>
               <span class="text-[10px] font-extrabold text-slate-400">Totale Mese: € ${monthlyTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="space-y-2.5">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Rendering Spese Aziendali suddiviso per sub-tab (Da affrontare / Saldate) e raggruppato mensilmente
+    function renderExpenses(filteredExpenses) {
+      const container = document.getElementById('expenses-list-container');
+      if (!container) return;
+
+      // Filtro in base al sotto-tab attivo
+      const isPending = activeExpenseSubTab === 'pending';
+      const list = filteredExpenses.filter(e => isPending ? (e.status !== 'covered') : (e.status === 'covered'));
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
+            <p class="text-xs font-bold text-slate-500">Nessuna spesa trovata in questa categoria</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">${isPending ? "Tutte le spese risultano saldate o non ne hai ancora aggiunta nessuna!" : "Nessuna spesa è stata ancora coperta dagli incassi dei progetti."}</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Raggruppamento mensile
+      const groups = {};
+      list.forEach(e => {
+        // Se è saldata usiamo il coveredDate per raggruppamento, altrimenti la data della spesa
+        const targetDate = (!isPending && e.coveredDate) ? e.coveredDate : e.date;
+        const m = getMonthFromDateString(targetDate);
+        if (!groups[m]) groups[m] = [];
+        groups[m].push(e);
+      });
+
+      const sortedMonths = Object.keys(groups).sort((a, b) => b - a);
+
+      container.innerHTML = sortedMonths.map(mStr => {
+        const m = parseInt(mStr);
+        const exps = groups[m];
+        const monthName = MONTHS_NAMES[m];
+        const monthlyTotal = exps.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
+        const itemsHtml = exps.map(e => {
+          let logHtml = '';
+          if (e.status === 'covered' && e.coveredByPaymentId) {
+            const receiverTeam = TEAM.find(t => t.id === e.coveredByMemberId);
+            const pDetails = getProjectDetailsForPayment(e.coveredByPaymentId);
+            logHtml = `
+              <div class="mt-2 text-[9px] text-emerald-600 bg-emerald-50/50 border border-emerald-100 rounded-xl p-2 space-y-1">
+                <span class="font-extrabold block uppercase tracking-wide">Tracciabilità Saldo</span>
+                <p class="leading-relaxed">
+                  Coperta da <span class="font-black text-emerald-800">${receiverTeam?.name || 'Membro'}</span> il <span class="font-bold">${e.coveredDate}</span> prelevando <span class="font-bold">€ ${parseFloat(e.amountDeducted || 0).toFixed(2)}</span> dall'incasso del progetto <span class="font-bold">${pDetails.projectName}</span> (${pDetails.clientName}).
+                </p>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-sm hover:border-slate-200 transition-all">
+              <div class="flex items-center justify-between">
+                <div class="space-y-0.5">
+                  <span class="text-[9px] text-slate-400 font-semibold">${e.date}</span>
+                  <h4 class="text-xs font-extrabold text-slate-700">${e.title}</h4>
+                </div>
+                <div class="flex items-center space-x-2 shrink-0">
+                  <div class="text-right mr-1.5">
+                    <p class="text-xs font-black text-slate-800">€ ${parseFloat(e.amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p class="text-[8px] text-slate-400 uppercase font-semibold">Costo Lordo</p>
+                  </div>
+                  <!-- Pulsanti standard uniformati -->
+                  <button onclick="editExpense('${e.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button onclick="deleteExpense('${e.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 font-bold transition-all" title="Elimina">
+                    <span class="text-xs px-1">✕</span>
+                  </button>
+                </div>
+              </div>
+              ${logHtml}
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="space-y-2">
+            <div class="flex justify-between items-center px-1 pt-1">
+              <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">${monthName} ${selectedYear}</span>
+              <span class="text-[10px] font-extrabold text-slate-400">Somma Spese: € ${monthlyTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div class="space-y-2.5">
               ${itemsHtml}
@@ -1130,7 +1379,6 @@
           const toM = TEAM.find(t => t.id === set.to);
           const amt = parseFloat(set.amount) || 0;
 
-          // Recupero dei dettagli del progetto e del cliente
           const details = set.projectId 
             ? getProjectDetailsForPayment(set.projectId) 
             : { projectName: 'Generale / Altro', clientName: 'OC CashFlow' };
@@ -1210,10 +1458,27 @@
 
       if (selectPay) selectPay.innerHTML = optionsHtml;
       
-      // I saldi manuali o di regolazione possono anche essere generici (non legati a un singolo progetto)
       if (selectSet) {
         selectSet.innerHTML = `<option value="">Generale / Altro</option>` + optionsHtml;
       }
+    }
+
+    // Popola il menu a tendina delle spese da coprire
+    function populateExpenseDropdown(filteredExpenses) {
+      const select = document.getElementById('new-pay-expense-id');
+      if (!select) return;
+
+      // Trova le spese che non sono ancora coperte, includendo anche quella attualmente associata se in editing
+      const pendingExps = filteredExpenses.filter(e => e.status !== 'covered' || e.coveredByPaymentId === editingPaymentId);
+
+      if (pendingExps.length === 0) {
+        select.innerHTML = `<option value="">Nessuna spesa da detrarre</option>`;
+        return;
+      }
+
+      select.innerHTML = `<option value="">Nessuna spesa da detrarre</option>` + pendingExps.map(e => {
+        return `<option value="${e.id}">${e.title} (Costo: € ${e.amount})</option>`;
+      }).join('');
     }
 
     // ==========================================
@@ -1223,7 +1488,7 @@
       document.querySelectorAll('main > section').forEach(sect => sect.classList.add('hidden'));
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
-      document.querySelectorAll('nav border, nav button').forEach(btn => {
+      document.querySelectorAll('nav button').forEach(btn => {
         btn.classList.remove('text-indigo-600', 'bg-indigo-50/50');
         btn.classList.add('text-slate-400');
       });
@@ -1234,6 +1499,35 @@
     function toggleSettings() {
       const el = document.getElementById('settings-card');
       el.classList.toggle('hidden');
+    }
+
+    // SOTTO-TAB SPESE (Da affrontare / Saldate)
+    function switchExpenseSubTab(sub) {
+      activeExpenseSubTab = sub;
+      document.querySelectorAll('#tab-expenses button[id^="subtab-exp-"]').forEach(btn => {
+        btn.className = "flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all text-slate-500";
+      });
+      document.getElementById(`subtab-exp-${sub}`).className = "flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all bg-white text-indigo-600 shadow-sm border border-slate-100";
+      processAndRender();
+    }
+
+    // EVENTO CAMBIAMENTO SPESA DA COPRIRE NELL'INCASSO
+    function onPaymentExpenseChange() {
+      const select = document.getElementById('new-pay-expense-id');
+      const container = document.getElementById('new-pay-expense-deduction-container');
+      const input = document.getElementById('new-pay-expense-deduction');
+
+      if (select && select.value) {
+        container.classList.remove('hidden');
+        // Pre-compila l'importo da decurtare con il costo nominale della spesa
+        const exp = expenses.find(e => e.id === select.value);
+        if (exp) {
+          input.value = exp.amount;
+        }
+      } else {
+        container.classList.add('hidden');
+        input.value = '';
+      }
     }
 
     // GESTIONE CONFERME DI ELIMINAZIONE E RESET
@@ -1406,25 +1700,33 @@
       );
     }
 
-    // MODAL ENTRATE
-    function openPaymentModal() {
-      document.getElementById('modal-payment-title').innerText = "Registra Entrata Cliente";
-      document.getElementById('btn-save-payment').innerText = "Registra Entrata Lorda";
-      document.getElementById('modal-payment').classList.remove('hidden');
-    }
-    function closePaymentModal() {
-      document.getElementById('modal-payment').classList.add('hidden');
-      document.getElementById('new-pay-amount').value = '';
-      document.getElementById('new-pay-desc').value = '';
-      setPayReceiver('gianluca');
-      editingPaymentId = null;
-    }
+    // FUNZIONE DI IMPOSTAZIONE SELEZIONATORE BENEFICIARIO (RIPRISTINATA)
     function setPayReceiver(id) {
       document.getElementById('new-pay-receiver').value = id;
       document.querySelectorAll('#pay-receivers-group button').forEach(btn => {
         btn.className = "py-2 px-1 rounded-xl border text-[11px] font-bold bg-slate-50 border-slate-200 text-slate-500";
       });
       document.getElementById(`pay-rec-${id}`).className = "py-2 px-1 rounded-xl border text-[11px] font-bold bg-indigo-50 border-indigo-300 text-indigo-700";
+    }
+
+    // MODAL ENTRATE (Migliorato con tracciabilità spese decurtate)
+    function openPaymentModal() {
+      document.getElementById('modal-payment-title').innerText = "Registra Entrata Cliente";
+      document.getElementById('btn-save-payment').innerText = "Registra Entrata Lorda";
+      document.getElementById('new-pay-expense-id').value = '';
+      document.getElementById('new-pay-expense-deduction-container').classList.add('hidden');
+      document.getElementById('new-pay-expense-deduction').value = '';
+      document.getElementById('modal-payment').classList.remove('hidden');
+    }
+    function closePaymentModal() {
+      document.getElementById('modal-payment').classList.add('hidden');
+      document.getElementById('new-pay-amount').value = '';
+      document.getElementById('new-pay-desc').value = '';
+      document.getElementById('new-pay-expense-id').value = '';
+      document.getElementById('new-pay-expense-deduction-container').classList.add('hidden');
+      document.getElementById('new-pay-expense-deduction').value = '';
+      setPayReceiver('gianluca');
+      editingPaymentId = null;
     }
     async function savePayment(e) {
       e.preventDefault();
@@ -1434,28 +1736,55 @@
       const date = document.getElementById('new-pay-date').value;
       const description = document.getElementById('new-pay-desc').value.trim();
 
+      // Opzione spesa
+      const selectedExpId = document.getElementById('new-pay-expense-id').value;
+      const expDeduction = parseFloat(document.getElementById('new-pay-expense-deduction').value) || 0;
+
       if (!projectId || !receiver || isNaN(amount) || !date) return;
 
       try {
+        let payId = editingPaymentId;
+        const paymentData = { projectId, receiver, amount, date, description };
+
+        // 1. Salvataggio o aggiornamento del documento incasso
         if (editingPaymentId) {
           const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'payments', editingPaymentId);
-          await setDoc(docRef, { projectId, receiver, amount, date, description }, { merge: true });
+          await setDoc(docRef, paymentData, { merge: true });
           showToast("Entrata modificata!");
         } else {
           const ref = collection(db, 'artifacts', appId, 'public', 'data', 'payments');
-          await addDoc(ref, {
-            projectId,
-            receiver,
-            amount,
-            date,
-            description,
-            createdAt: new Date().toISOString()
-          });
-          showToast("Entrata registrata!");
+          const docRef = await addDoc(ref, { ...paymentData, createdAt: new Date().toISOString() });
+          payId = docRef.id;
         }
+
+        // 2. Ripristino di eventuali spese precedentemente saldate da questo incasso
+        const previouslyLinked = expenses.filter(exp => exp.coveredByPaymentId === payId);
+        for (const prevExp of previouslyLinked) {
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', prevExp.id), {
+            status: 'pending',
+            coveredByPaymentId: '',
+            coveredByMemberId: '',
+            coveredDate: '',
+            amountDeducted: 0
+          }, { merge: true });
+        }
+
+        // 3. Se è stata selezionata una spesa, applica la decurtazione del saldo su cloud
+        if (selectedExpId) {
+          const expRef = doc(db, 'artifacts', appId, 'public', 'data', 'expenses', selectedExpId);
+          await setDoc(expRef, {
+            status: 'covered',
+            coveredByPaymentId: payId,
+            coveredByMemberId: receiver,
+            coveredDate: date,
+            amountDeducted: expDeduction
+          }, { merge: true });
+        }
+
         closePaymentModal();
       } catch (err) {
-        console.error(err);
+        console.error("Errore salvataggio incasso:", err);
+        showToast("Errore nel salvataggio dell'entrata", "error");
       }
     }
     function editPayment(id) {
@@ -1467,6 +1796,22 @@
       document.getElementById('new-pay-amount').value = pay.amount;
       document.getElementById('new-pay-date').value = pay.date;
       document.getElementById('new-pay-desc').value = pay.description || '';
+
+      // Ripopola dropdown spese per aggiornare la visualizzazione
+      populateExpenseDropdown(expenses.filter(e => e.date && e.date.startsWith(selectedYear.toString())));
+
+      // Controlla se ci sono spese legate a questo pagamento
+      const linkedExp = expenses.find(e => e.coveredByPaymentId === id);
+      if (linkedExp) {
+        document.getElementById('new-pay-expense-id').value = linkedExp.id;
+        document.getElementById('new-pay-expense-deduction-container').classList.remove('hidden');
+        document.getElementById('new-pay-expense-deduction').value = linkedExp.amountDeducted || linkedExp.amount;
+      } else {
+        document.getElementById('new-pay-expense-id').value = '';
+        document.getElementById('new-pay-expense-deduction-container').classList.add('hidden');
+        document.getElementById('new-pay-expense-deduction').value = '';
+      }
+
       document.getElementById('modal-payment-title').innerText = "Modifica Entrata";
       document.getElementById('btn-save-payment').innerText = "Salva Modifiche";
       document.getElementById('modal-payment').classList.remove('hidden');
@@ -1475,11 +1820,102 @@
       const pay = payments.find(p => p.id === id);
       if (!pay) return;
       showConfirmModal(
-        `Eliminare questa entrata da € ${pay.amount}? La situazione dei saldi verrà immediatamente ricalcolata.`,
+        `Eliminare questa entrata da € ${pay.amount}? Le eventuali spese collegate torneranno nello stato di sospeso.`,
         async () => {
           try {
+            // 1. Ripristina le spese collegate
+            const previouslyLinked = expenses.filter(exp => exp.coveredByPaymentId === id);
+            for (const prevExp of previouslyLinked) {
+              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', prevExp.id), {
+                status: 'pending',
+                coveredByPaymentId: '',
+                coveredByMemberId: '',
+                coveredDate: '',
+                amountDeducted: 0
+              }, { merge: true });
+            }
+            // 2. Elimina il pagamento
             await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', id));
             showToast("Entrata rimossa con successo!");
+          } catch(err) {
+            console.error(err);
+          }
+        },
+        true
+      );
+    }
+
+    // MODAL SPESE AZIENDALI (NUOVA FUNZIONE)
+    function openExpenseModal() {
+      document.getElementById('modal-expense-title').innerText = "Crea Nuova Spesa";
+      document.getElementById('btn-save-expense').innerText = "Crea Spesa";
+      document.getElementById('modal-expense').classList.remove('hidden');
+    }
+    function closeExpenseModal() {
+      document.getElementById('modal-expense').classList.add('hidden');
+      document.getElementById('new-exp-title').value = '';
+      document.getElementById('new-exp-amount').value = '';
+      editingExpenseId = null;
+    }
+    async function saveExpense(e) {
+      e.preventDefault();
+      const title = document.getElementById('new-exp-title').value.trim();
+      const amount = parseFloat(document.getElementById('new-exp-amount').value);
+      const date = document.getElementById('new-exp-date').value;
+
+      if (!title || isNaN(amount) || !date) return;
+
+      try {
+        const expData = {
+          title,
+          amount,
+          date,
+          year: selectedYear
+        };
+
+        if (editingExpenseId) {
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'expenses', editingExpenseId);
+          await setDoc(docRef, expData, { merge: true });
+          showToast("Spesa modificata!");
+        } else {
+          const ref = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
+          await addDoc(ref, {
+            ...expData,
+            status: 'pending',
+            coveredByPaymentId: '',
+            coveredByMemberId: '',
+            coveredDate: '',
+            amountDeducted: 0,
+            createdAt: new Date().toISOString()
+          });
+          showToast("Spesa registrata correttamente!");
+        }
+        closeExpenseModal();
+      } catch (err) {
+        console.error(err);
+        showToast("Errore nel salvataggio della spesa", "error");
+      }
+    }
+    function editExpense(id) {
+      const exp = expenses.find(e => e.id === id);
+      if (!exp) return;
+      editingExpenseId = id;
+      document.getElementById('new-exp-title').value = exp.title;
+      document.getElementById('new-exp-amount').value = exp.amount;
+      document.getElementById('new-exp-date').value = exp.date;
+      document.getElementById('modal-expense-title').innerText = "Modifica Spesa";
+      document.getElementById('btn-save-expense').innerText = "Salva Modifiche";
+      document.getElementById('modal-expense').classList.remove('hidden');
+    }
+    function deleteExpense(id) {
+      const exp = expenses.find(e => e.id === id);
+      if (!exp) return;
+      showConfirmModal(
+        `Rimuovere la spesa "${exp.title}" da € ${exp.amount}? Se era già stata saldata, l'imponibile dell'incasso collegato tornerà a salire.`,
+        async () => {
+          try {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id));
+            showToast("Spesa rimossa con successo.");
           } catch(err) {
             console.error(err);
           }
@@ -1576,13 +2012,17 @@
     // TRIGGER RESET COMPLETO DATABASE (Risolto conflitto modale e aggiunto Reload immediato)
     function triggerDatabaseReset() {
       showConfirmModal(
-        "ATTENZIONE: Sei sicuro di voler resettare COMPLETAMENTE il database? Questa azione è irreversibile e rimuoverà per sempre tutti i clienti, i progetti, le entrate e le compensazioni registrate finora per tutti gli anni. L'app verrà riavviata automaticamente.",
+        "ATTENZIONE: Sei sicuro di voler resettare COMPLETAMENTE il database? Questa azione è irreversibile e rimuoverà per sempre tutti i clienti, i progetti, le entrate, le spese aziendali e le compensazioni registrate finora per tutti gli anni. L'app verrà riavviata automaticamente.",
         async () => {
           showToast("Reset del database in corso...");
           try {
             // Rimozione di tutte le entrate
             for (const p of payments) {
               await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', p.id));
+            }
+            // Rimozione di tutte le spese
+            for (const e of expenses) {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', e.id));
             }
             // Rimozione di tutti i progetti
             for (const pr of projects) {
@@ -1637,6 +2077,7 @@
       
       document.getElementById('new-pay-date').value = formattedDate;
       document.getElementById('new-set-date').value = formattedDate;
+      document.getElementById('new-exp-date').value = formattedDate;
     }
 
     function getProjectDetailsForPayment(projId) {
