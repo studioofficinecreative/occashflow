@@ -287,13 +287,13 @@
         </button>
         <button onclick="switchTab('expenses')" id="nav-expenses" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Spese</span>
         </button>
         <button onclick="switchTab('settlements')" id="nav-settlements" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Saldi</span>
         </button>
@@ -1215,7 +1215,7 @@
                   <span class="inline-flex px-2 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-wider ${receiverTeam?.bg} ${receiverTeam?.text} border ${receiverTeam?.border}">
                     Incasso ${receiverTeam?.name}
                   </span>
-                  <span class="text-[9px] text-slate-400">${p.date}</span>
+                  <span class="text-[9px] text-slate-400">${formatDateToItalian(p.date)}</span>
                 </div>
                 <div>
                   <h4 class="text-[10px] text-slate-400 font-bold uppercase">${details.clientName}</h4>
@@ -1306,12 +1306,12 @@
           let logHtml = '';
           if (e.status === 'covered' && e.coveredByPaymentId) {
             const receiverTeam = TEAM.find(t => t.id === e.coveredByMemberId);
-            const pDetails = getProjectDetailsForPayment(e.coveredByPaymentId);
+            const pDetails = getProjectDetailsByPaymentId(e.coveredByPaymentId);
             logHtml = `
               <div class="mt-2 text-[9px] text-emerald-600 bg-emerald-50/50 border border-emerald-100 rounded-xl p-2 space-y-1">
                 <span class="font-extrabold block uppercase tracking-wide">Tracciabilità Saldo</span>
                 <p class="leading-relaxed">
-                  Coperta da <span class="font-black text-emerald-800">${receiverTeam?.name || 'Membro'}</span> il <span class="font-bold">${e.coveredDate}</span> prelevando <span class="font-bold">€ ${parseFloat(e.amountDeducted || 0).toFixed(2)}</span> dall'incasso del progetto <span class="font-bold">${pDetails.projectName}</span> (${pDetails.clientName}).
+                  Coperta da <span class="font-black text-emerald-800">${receiverTeam?.name || 'Membro'}</span> il <span class="font-bold">${formatDateToItalian(e.coveredDate)}</span> prelevando <span class="font-bold">€ ${parseFloat(e.amountDeducted || 0).toFixed(2)}</span> dall'incasso del progetto <span class="font-bold">${pDetails.projectName}</span> (${pDetails.clientName}).
                 </p>
               </div>
             `;
@@ -1321,7 +1321,7 @@
             <div class="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-sm hover:border-slate-200 transition-all">
               <div class="flex items-center justify-between">
                 <div class="space-y-0.5">
-                  <span class="text-[9px] text-slate-400 font-semibold">${e.date}</span>
+                  <span class="text-[9px] text-slate-400 font-semibold">${formatDateToItalian(e.date)}</span>
                   <h4 class="text-xs font-extrabold text-slate-700">${e.title}</h4>
                 </div>
                 <div class="flex items-center space-x-2 shrink-0">
@@ -1420,7 +1420,7 @@
                     <span class="text-[9px] text-slate-400 font-semibold">${details.projectName}</span>
                   </div>
                   
-                  <p class="text-[8px] text-slate-400 mt-1">${set.date}</p>
+                  <p class="text-[8px] text-slate-400 mt-1">${formatDateToItalian(set.date)}</p>
                 </div>
               </div>
 
@@ -2093,6 +2093,26 @@
         clientName: client ? client.name : 'Cliente Sconosciuto'
       };
     }
+
+    // Nuova funzione per ricavare i dettagli del progetto passando il paymentId
+    function getProjectDetailsByPaymentId(paymentId) {
+      const payment = payments.find(p => p.id === paymentId);
+      if (!payment) return { projectName: 'Progetto Sconosciuto', clientName: 'Cliente Sconosciuto' };
+      return getProjectDetailsForPayment(payment.projectId);
+    }
+    window.getProjectDetailsByPaymentId = getProjectDetailsByPaymentId;
+
+    // Funzione di formattazione delle date in italiano (GG/MM/AAAA)
+    function formatDateToItalian(dateStr) {
+      if (!dateStr) return '';
+      if (dateStr.includes('/')) return dateStr;
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateStr;
+    }
+    window.formatDateToItalian = formatDateToItalian;
   </script>
 
   <!-- REGISTRAZIONE SERVICE WORKER E CUSTOM INSTALLER PER PWA (CORRETTA) -->
