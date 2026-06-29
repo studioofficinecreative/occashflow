@@ -126,76 +126,78 @@
     <!-- MAIN CONTENT -->
     <main class="max-w-md md:max-w-5xl w-full mx-auto px-4 mt-6 flex-1">
       
-      <!-- TAB 1: PANORAMICA (DASHBOARD) - Griglia Responsive a Doppia Colonna su Desktop -->
-      <section id="tab-dashboard" class="space-y-6 md:space-y-0 md:grid md:grid-cols-12 md:gap-6 items-start">
-        <!-- Colonna Sinistra (Principale): Resoconto Finanziario ed Andamento Mensile -->
-        <div class="md:col-span-7 space-y-6">
-          <!-- Totale Lordo / Netto -->
-          <div class="bg-gradient-to-br from-indigo-50/60 via-white to-sky-50/60 border border-slate-100 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-sky-200/10 rounded-full blur-2xl"></div>
-            <div class="absolute bottom-0 left-0 w-32 h-32 bg-indigo-200/10 rounded-full blur-2xl"></div>
-            
-            <div class="flex justify-between items-center">
-              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Entrate Lorde <span class="current-year-placeholder">2026</span></p>
-              <span class="text-[9px] font-bold text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-slate-100">Al lordo delle tasse</span>
-            </div>
-            <h2 id="total-gross" class="text-2xl font-extrabold text-slate-900 mt-1">€ 0,00</h2>
-            
-            <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100/75">
-              <div>
-                <p class="text-[10px] font-semibold text-slate-400 uppercase">Trattenute Imposte (<span id="tax-rate-label">20</span>%)</p>
-                <p id="total-taxes" class="text-sm font-bold text-rose-500 mt-0.5">€ 0,00</p>
+      <!-- TAB 1: PANORAMICA (DASHBOARD) - Griglia Responsive a Doppia Colonna su Desktop con wrapper corretto -->
+      <section id="tab-dashboard" class="hidden">
+        <div class="space-y-6 md:space-y-0 md:grid md:grid-cols-12 md:gap-6 items-start">
+          <!-- Colonna Sinistra (Principale): Resoconto Finanziario ed Andamento Mensile -->
+          <div class="md:col-span-7 space-y-6">
+            <!-- Totale Lordo / Netto -->
+            <div class="bg-gradient-to-br from-indigo-50/60 via-white to-sky-50/60 border border-slate-100 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div class="absolute top-0 right-0 w-32 h-32 bg-sky-200/10 rounded-full blur-2xl"></div>
+              <div class="absolute bottom-0 left-0 w-32 h-32 bg-indigo-200/10 rounded-full blur-2xl"></div>
+              
+              <div class="flex justify-between items-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Entrate Lorde <span class="current-year-placeholder">2026</span></p>
+                <span class="text-[9px] font-bold text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-slate-100">Al lordo delle tasse</span>
               </div>
-              <div>
-                <p class="text-[10px] font-semibold text-slate-400 uppercase">Netto Disponibile</p>
-                <p id="total-net" class="text-sm font-bold text-emerald-600 mt-0.5">€ 0,00</p>
+              <h2 id="total-gross" class="text-2xl font-extrabold text-slate-900 mt-1">€ 0,00</h2>
+              
+              <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100/75">
+                <div>
+                  <p class="text-[10px] font-semibold text-slate-400 uppercase">Trattenute Imposte (<span id="tax-rate-label">20</span>%)</p>
+                  <p id="total-taxes" class="text-sm font-bold text-rose-500 mt-0.5">€ 0,00</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-semibold text-slate-400 uppercase">Netto Disponibile</p>
+                  <p id="total-net" class="text-sm font-bold text-emerald-600 mt-0.5">€ 0,00</p>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-dashed border-slate-100 flex justify-between items-center">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Quota Netta a Testa (1/3)</span>
+                <span id="fair-share" class="text-sm font-black text-indigo-600">€ 0,00</span>
               </div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-dashed border-slate-100 flex justify-between items-center">
-              <span class="text-[10px] font-bold text-slate-400 uppercase">Quota Netta a Testa (1/3)</span>
-              <span id="fair-share" class="text-sm font-black text-indigo-600">€ 0,00</span>
+            <!-- Sezione Rendiconto ed Andamento Mensile -->
+            <div class="space-y-2.5">
+              <div class="flex justify-between items-center px-1">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Andamento Mensile</h3>
+                <span class="text-[9px] text-slate-400">Raggruppato</span>
+              </div>
+              <div id="monthly-breakdown-container" class="space-y-2.5">
+                <!-- Riempito via JavaScript con il riepilogo mensile dell'esercizio -->
+              </div>
             </div>
           </div>
 
-          <!-- Sezione Rendiconto ed Andamento Mensile -->
-          <div class="space-y-2.5">
-            <div class="flex justify-between items-center px-1">
-              <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Andamento Mensile</h3>
-              <span class="text-[9px] text-slate-400">Raggruppato</span>
+          <!-- Colonna Destra (Laterale): Compensazioni, Cassa Personale e Riepilogo Personale -->
+          <div class="md:col-span-5 space-y-6">
+            <!-- Sezione Compensazioni Consigliate -->
+            <div class="space-y-2.5">
+              <div class="flex justify-between items-center px-1">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Compensazioni Consigliate</h3>
+                <span class="text-[9px] text-slate-400">Ricalcolato sul Netto</span>
+              </div>
+              <div id="suggested-transfers-container" class="space-y-2.5">
+                <!-- Riempito via JavaScript -->
+              </div>
             </div>
-            <div id="monthly-breakdown-container" class="space-y-2.5">
-              <!-- Riempito via JavaScript con il riepilogo mensile dell'esercizio -->
-            </div>
-          </div>
-        </div>
 
-        <!-- Colonna Destra (Laterale): Compensazioni, Cassa Personale e Riepilogo Personale -->
-        <div class="md:col-span-5 space-y-6">
-          <!-- Sezione Compensazioni Consigliate -->
-          <div class="space-y-2.5">
-            <div class="flex justify-between items-center px-1">
-              <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Compensazioni Consigliate</h3>
-              <span class="text-[9px] text-slate-400">Ricalcolato sul Netto</span>
+            <!-- Sezione Cassa Personale -->
+            <div class="space-y-2.5">
+              <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Cassa Personale <span class="current-year-placeholder">2026</span></h3>
+              <div class="grid grid-cols-3 gap-3" id="team-balances-container">
+                <!-- Riempito via JavaScript -->
+              </div>
             </div>
-            <div id="suggested-transfers-container" class="space-y-2.5">
-              <!-- Riempito via JavaScript -->
-            </div>
-          </div>
 
-          <!-- Sezione Cassa Personale -->
-          <div class="space-y-2.5">
-            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Cassa Personale <span class="current-year-placeholder">2026</span></h3>
-            <div class="grid grid-cols-3 gap-3" id="team-balances-container">
-              <!-- Riempito via JavaScript -->
-            </div>
-          </div>
-
-          <!-- Grafico / Riepilogo Riscosso Personale -->
-          <div class="bg-white border border-slate-100 rounded-2xl p-4 space-y-3 shadow-sm">
-            <h4 class="text-[10px] font-bold text-slate-400 uppercase">Riepilogo Riscosso sul Conto Fisico (<span class="current-year-placeholder">2026</span>)</h4>
-            <div class="space-y-3" id="direct-earnings-container">
-              <!-- Riempito via JavaScript -->
+            <!-- Grafico / Riepilogo Riscosso Personale -->
+            <div class="bg-white border border-slate-100 rounded-2xl p-4 space-y-3 shadow-sm">
+              <h4 class="text-[10px] font-bold text-slate-400 uppercase">Riepilogo Riscosso sul Conto Fisico (<span class="current-year-placeholder">2026</span>)</h4>
+              <div class="space-y-3" id="direct-earnings-container">
+                <!-- Riempito via JavaScript -->
+              </div>
             </div>
           </div>
         </div>
@@ -281,31 +283,31 @@
       <div class="grid grid-cols-5 gap-1 px-2 py-2">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-indigo-600 bg-indigo-50/50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Panoramica</span>
         </button>
         <button onclick="switchTab('clients')" id="nav-clients" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Clienti</span>
         </button>
         <button onclick="switchTab('payments')" id="nav-payments" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Entrate</span>
         </button>
         <button onclick="switchTab('expenses')" id="nav-expenses" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Spese</span>
         </button>
         <button onclick="switchTab('settlements')" id="nav-settlements" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Saldi</span>
         </button>
@@ -1776,7 +1778,6 @@
           await setDoc(docRef, paymentData, { merge: true });
           showToast("Entrata modificata!");
         } else {
-          const ref = collection(db, 'artifacts', appId, 'powa', 'payments'); // updated collection target
           const refColl = collection(db, 'artifacts', appId, 'public', 'data', 'payments');
           const docRef = await addDoc(refColl, { ...paymentData, createdAt: new Date().toISOString() });
           payId = docRef.id;
