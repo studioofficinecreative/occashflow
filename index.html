@@ -295,13 +295,13 @@
         </button>
         <button onclick="switchTab('payments')" id="nav-payments" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" strokeWidth="2.2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Entrate</span>
         </button>
         <button onclick="switchTab('expenses')" id="nav-expenses" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.5 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.5-1M12 16v1M3 12h18" />
           </svg>
           <span class="text-[8px] font-bold mt-1 uppercase tracking-wide">Spese</span>
         </button>
@@ -1319,21 +1319,72 @@
         const m = parseInt(mStr);
         const exps = groups[m];
         const monthName = MONTHS_NAMES[m];
-        const monthlyTotal = exps.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+        
+        // Calcola il totale mensile in base allo stato
+        const monthlyTotal = exps.reduce((sum, e) => {
+          const rem = isPending ? ((parseFloat(e.amount) || 0) - (parseFloat(e.amountDeducted) || 0)) : (parseFloat(e.amountDeducted) || 0);
+          return sum + rem;
+        }, 0);
 
         const itemsHtml = exps.map(e => {
           let logHtml = '';
-          if (e.status === 'covered' && e.coveredByPaymentId) {
-            const receiverTeam = TEAM.find(t => t.id === e.coveredByMemberId);
-            const pDetails = getProjectDetailsByPaymentId(e.coveredByPaymentId);
-            logHtml = `
-              <div class="mt-2 text-[9px] text-emerald-600 bg-emerald-50/50 border border-emerald-100 rounded-xl p-2 space-y-1">
-                <span class="font-extrabold block uppercase tracking-wide">Tracciabilità Saldo</span>
-                <p class="leading-relaxed">
-                  Coperta da <span class="font-black text-emerald-800">${receiverTeam?.name || 'Membro'}</span> il <span class="font-bold">${formatDateToItalian(e.coveredDate)}</span> prelevando <span class="font-bold">€ ${parseFloat(e.amountDeducted || 0).toFixed(2)}</span> dall'incasso del progetto <span class="font-bold">${pDetails.projectName}</span> (${pDetails.clientName}).
-                </p>
+          let amountDisplayHtml = '';
+          
+          const totalAmount = parseFloat(e.amount) || 0;
+          const deductedAmount = parseFloat(e.amountDeducted) || 0;
+          const residualAmount = Math.max(0, totalAmount - deductedAmount);
+
+          if (isPending) {
+            if (deductedAmount > 0) {
+              amountDisplayHtml = `
+                <div class="text-right mr-1.5">
+                  <p class="text-xs font-black text-rose-500">€ ${residualAmount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p class="text-[8px] text-slate-400 uppercase font-semibold">Residuo da coprire</p>
+                </div>
+              `;
+              logHtml = `
+                <div class="mt-2 text-[9px] text-indigo-600 bg-indigo-50/50 border border-indigo-100 rounded-xl p-2">
+                  <span class="font-extrabold block uppercase tracking-wide">Copertura Parziale Attiva</span>
+                  <p class="leading-relaxed">
+                    Importo totale spesa: <span class="font-bold">€ ${totalAmount.toFixed(2)}</span>. Già coperti <span class="font-bold text-emerald-600">€ ${deductedAmount.toFixed(2)}</span>.
+                  </p>
+                </div>
+              `;
+            } else {
+              amountDisplayHtml = `
+                <div class="text-right mr-1.5">
+                  <p class="text-xs font-black text-slate-800">€ ${totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p class="text-[8px] text-slate-400 uppercase font-semibold">Costo Lordo</p>
+                </div>
+              `;
+            }
+          } else {
+            // Sotto-tab: Affrontate
+            amountDisplayHtml = `
+              <div class="text-right mr-1.5">
+                <p class="text-xs font-black text-emerald-600">€ ${deductedAmount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p class="text-[8px] text-slate-400 uppercase font-semibold">Quota Coperta</p>
               </div>
             `;
+            
+            if (e.coveredByPaymentId) {
+              const receiverTeam = TEAM.find(t => t.id === e.coveredByMemberId);
+              const pDetails = getProjectDetailsByPaymentId(e.coveredByPaymentId);
+              const isPartial = deductedAmount < totalAmount;
+              logHtml = `
+                <div class="mt-2 text-[9px] text-emerald-600 bg-emerald-50/50 border border-emerald-100 rounded-xl p-2 space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="font-extrabold uppercase tracking-wide">Tracciabilità Saldo</span>
+                    <span class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${isPartial ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}">
+                      ${isPartial ? 'Copertura Parziale' : 'Copertura Totale'}
+                    </span>
+                  </div>
+                  <p class="leading-relaxed">
+                    Coperta da <span class="font-black text-emerald-800">${receiverTeam?.name || 'Membro'}</span> il <span class="font-bold">${formatDateToItalian(e.coveredDate)}</span> prelevando <span class="font-bold">€ ${deductedAmount.toFixed(2)}</span> dall'incasso del progetto <span class="font-bold">${pDetails.projectName}</span> (${pDetails.clientName}). (Spesa totale: € ${totalAmount.toFixed(2)})
+                  </p>
+                </div>
+              `;
+            }
           }
 
           return `
@@ -1344,10 +1395,7 @@
                   <h4 class="text-xs font-extrabold text-slate-700">${e.title}</h4>
                 </div>
                 <div class="flex items-center space-x-2 shrink-0">
-                  <div class="text-right mr-1.5">
-                    <p class="text-xs font-black text-slate-800">€ ${parseFloat(e.amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    <p class="text-[8px] text-slate-400 uppercase font-semibold">Costo Lordo</p>
-                  </div>
+                  ${amountDisplayHtml}
                   <!-- Pulsanti standard uniformati -->
                   <button onclick="editExpense('${e.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-all" title="Modifica">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1368,7 +1416,7 @@
           <div class="space-y-2 w-full">
             <div class="flex justify-between items-center px-1 pt-1">
               <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">${monthName} ${selectedYear}</span>
-              <span class="text-[10px] font-extrabold text-slate-400">Somma Spese: € ${monthlyTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="text-[10px] font-extrabold text-slate-400">${isPending ? "Somma Residua" : "Spese Coperte"}: € ${monthlyTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div class="space-y-2.5">
               ${itemsHtml}
@@ -1503,7 +1551,11 @@
       if (!select) return;
 
       // Trova le spese che non sono ancora coperte, includendo anche quella attualmente associata se in editing
-      const pendingExps = filteredExpenses.filter(e => e.status !== 'covered' || e.coveredByPaymentId === editingPaymentId);
+      const pendingExps = filteredExpenses.filter(e => {
+        const deducted = parseFloat(e.amountDeducted) || 0;
+        const total = parseFloat(e.amount) || 0;
+        return e.status !== 'covered' || deducted < total || e.coveredByPaymentId === editingPaymentId;
+      });
 
       if (pendingExps.length === 0) {
         select.innerHTML = `<option value="">Nessuna spesa da detrarre</option>`;
@@ -1511,7 +1563,10 @@
       }
 
       select.innerHTML = `<option value="">Nessuna spesa da detrarre</option>` + pendingExps.map(e => {
-        return `<option value="${e.id}">${e.title} (Costo: € ${e.amount})</option>`;
+        const total = parseFloat(e.amount) || 0;
+        const deducted = parseFloat(e.amountDeducted) || 0;
+        const remaining = total - deducted;
+        return `<option value="${e.id}">${e.title} (${deducted > 0 ? `Residuo: € ${remaining.toFixed(2)} su € ${total.toFixed(2)}` : `Costo: € ${total.toFixed(2)}`})</option>`;
       }).join('');
     }
 
@@ -1538,10 +1593,13 @@
 
       if (select && select.value) {
         container.classList.remove('hidden');
-        // Pre-compila l'importo da decurtare con il costo nominale della spesa
+        // Pre-compila l'importo da decurtare con il costo nominale residuo della spesa
         const exp = expenses.find(e => e.id === select.value);
         if (exp) {
-          input.value = exp.amount;
+          const total = parseFloat(exp.amount) || 0;
+          const alreadyDeducted = parseFloat(exp.amountDeducted) || 0;
+          const remaining = Math.max(0, total - alreadyDeducted);
+          input.value = remaining;
         }
       } else {
         container.classList.add('hidden');
